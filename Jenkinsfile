@@ -93,9 +93,9 @@ pipeline {
                             def bc = openshift.selector("bc", my_bc)
                             
                             def artifact_file = sh(script: "ls $artifact", returnStdout: true)?.trim()
-                            def tarball_url = "${BUILD_URL}artifact/$artifact_file"
+                            def jar_url = "${BUILD_URL}artifact/$artifact_file"
                             
-                            def buildSel = bc.startBuild("-e tarball_url=${tarball_url}")
+                            def buildSel = bc.startBuild("-e jar_url=${jar_url}")
                             buildSel.logs("-f")
                         }
                     }
