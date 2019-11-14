@@ -91,6 +91,10 @@ pipeline {
                         openshift.withProject() {
                             echo "Starting image build: ${openshift.project()}:${my_bc}"
                             def bc = openshift.selector("bc", my_bc)
+                            
+                            def artifact_file = sh(script: "ls $artifact", returnStdout: true)?.trim()
+                            def tarball_url = "${BUILD_URL}artifact/$artifact_file"
+                            
                             def buildSel = bc.startBuild("-e tarball_url=${tarball_url}")
                             buildSel.logs("-f")
                         }
