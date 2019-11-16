@@ -7,14 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepomigratorCache {
-
-
-  public static List<JsonObject> errorList = new ArrayList<>();
-  public static Flowable<JsonObject> errorFlow = Flowable.fromIterable(errorList);
-  
-  
-  public static List<JsonObject> contentList = new ArrayList<>();
-  public static Flowable<JsonObject> contentFlow = Flowable.fromIterable(contentList);
   
   
   public static List<JsonObject> openCircuitBrowsedStores = new ArrayList<>();

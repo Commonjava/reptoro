@@ -1,17 +1,21 @@
 package com.test.repomigrator.entity;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@DataObject(generateConverter = true)
 public class Metadata implements Serializable {
   
-  @JsonbProperty("changelog")
+
     String changelog;
+
+    public Metadata(JsonObject json) {
+        
+    }
     
     public String getChangelog() {
         return changelog;

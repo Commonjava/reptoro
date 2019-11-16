@@ -15,30 +15,21 @@ import java.util.List;
 
 
 @DataObject(generateConverter = true)
-//@JsonAutoDetect
-//@JsonIgnoreProperties(ignoreUnknown = true)
 public class BrowsedStore implements Serializable {
 
-//  @JsonbProperty("storeKey")
+
+
     String storeKey;
-//  @JsonbProperty("path")
     String path;
-//  @JsonbProperty("storeBrowseUrl")
     String storeBrowseUrl;
-//  @JsonbProperty("storeContentUrl")
     String storeContentUrl;
-//  @JsonbProperty("baseBrowseUrl")
     String baseBrowseUrl;
-//  @JsonbProperty("baseContentUrl")
     String baseContentUrl;
-//  @JsonbProperty("parentUrl")
     String parentUrl;
-//  @JsonbProperty("parentPath")
     String parentPath;
   
-//  @JsonbProperty("sources")
+
     List<String> sources;
-//  @JsonbProperty("listingUrls")
     List<ListingUrls> listingUrls;
     
     
@@ -46,7 +37,7 @@ public class BrowsedStore implements Serializable {
     }
     
     public BrowsedStore(JsonObject jsonObject) {
-//      BrowsedStoreConvertor.fromJson(jsonObject,this);
+    //  BrowsedStoreConverter.fromJson(json, obj);
     }
     
     public BrowsedStore(String storeKey, String path, String storeBrowseUrl, String storeContentUrl, String baseBrowseUrl, List<String> sources, List<ListingUrls> listingUrls) {
@@ -61,7 +52,7 @@ public class BrowsedStore implements Serializable {
     
     public JsonObject toJson() {
       JsonObject jsonObject = new JsonObject();
-//      BrowsedStoreConvertor.toJson(this,jsonObject);
+    //   BrowsedStoreConverter.toJson(obj, json);
       return jsonObject;
     }
     

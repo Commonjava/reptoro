@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -38,7 +39,18 @@ public class MainVerticle extends AbstractVerticle {
 	@Override
 	public void start() throws Exception { // Promise<Void> startPromise
 //    logger.log(Level.INFO,"[[START]] {0}" , this.getClass().getName());
-
+    
+    vertx.exceptionHandler(t -> {
+      vertx.eventBus().publish("error.processing",
+        new JsonObject()
+          .put("time", Instant.now())
+          .put("msg", t.getMessage())
+          .put("cause", t.getCause())
+          .put("stacktrace", t.getStackTrace())
+          .put("suppresed", t.getSuppressed())
+      );
+    });
+    
 		System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
 
 		configureLogging();
@@ -69,12 +81,18 @@ public class MainVerticle extends AbstractVerticle {
 		// create OAuth 2 instance for Keycloak
 //	oauth2 = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, configRetriever.getCachedConfig() );
 		configRetriever.getConfig(conf -> {
-			vertx.deployVerticle(new RemoteRepositoryProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new BrowsedProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new ListingUrlProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new ContentProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+		  // deploy services first...
+		  vertx.deployVerticle("com.test.repomigrator.verticles.IndyHttpClientVerticle", ar -> {
+        logger.info("IndyHttpClientVerticle Deployed, msg: " + ar.result());
+        
+        vertx.deployVerticle(new RemoteRepositoryProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+        vertx.deployVerticle(new BrowsedProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+        vertx.deployVerticle(new ListingUrlProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+        vertx.deployVerticle(new ContentProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+        vertx.deployVerticle(new RepoValidationProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+      });
+		  
 			vertx.deployVerticle(new ErrorProcessing());
-			vertx.deployVerticle(new RepoValidationProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
 			vertx.deployVerticle(new DBProcessingVerticle(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
 		});
 

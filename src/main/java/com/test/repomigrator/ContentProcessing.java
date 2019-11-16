@@ -1,6 +1,6 @@
 package com.test.repomigrator;
 
-import com.sun.org.apache.xpath.internal.functions.FuncSubstring;
+import io.reactivex.Flowable;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
@@ -8,18 +8,24 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
-//import io.vertx.reactivex.core.AbstractVerticle;
-//import io.vertx.reactivex.ext.web.client.WebClient;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+//import io.vertx.reactivex.core.AbstractVerticle;
+//import io.vertx.reactivex.ext.web.client.WebClient;
 
 public class ContentProcessing extends AbstractVerticle {
   
   Logger logger = Logger.getLogger(this.getClass().getName());
+  
+  public static List<JsonObject> contentList = new ArrayList<>();
+  public static Flowable<JsonObject> contentFlow = Flowable.fromIterable(contentList);
   
   
   static final String HTTPS = "https";
@@ -33,7 +39,6 @@ public class ContentProcessing extends AbstractVerticle {
   
   @Override
   public void start() throws Exception {
-//    logger.log(Level.INFO,"[[START]] {0}" , this.getClass().getName());
   
     vertx.eventBus().<JsonObject>consumer("content.url.processing" , this::handleContentComparing)
     .exceptionHandler(t -> {
@@ -58,9 +63,9 @@ public class ContentProcessing extends AbstractVerticle {
     JsonObject msgBody = res.body();
     if(msgBody.containsKey("compare") && msgBody.getBoolean("compare")) {
       compareContents(msgBody);
-      logger.info(msgBody.encodePrettily());
+      contentList.add(msgBody);
     } else {
-      logger.info(msgBody.encodePrettily());
+      contentList.add(msgBody);
     }
   }
   
