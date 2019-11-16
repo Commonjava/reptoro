@@ -6,13 +6,20 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.eventbus.Message;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 public class BrowsedProcessing extends AbstractVerticle {
   
   Logger logger = Logger.getLogger(this.getClass().getName());
   
-  static int counter = 0;
+  static AtomicLong counter = null;
+  
+  static {
+    if(counter == null) {
+      counter = new AtomicLong();
+    }
+  }
   
   
   @Override
@@ -40,7 +47,7 @@ public class BrowsedProcessing extends AbstractVerticle {
       String[] splitStoreKey = storeKey.split(":");
       String name = splitStoreKey[2];
       
-      logger.info("\t\t\t========= < " + ++counter + " : " + name + " > ===========");
+      logger.info("\t\t\t========= < " + counter.incrementAndGet() + " : " + name + " > ===========");
       indyHttpClientService.getListingsFromBrowsedStore(name , ar -> {
         if(ar.failed()) {
           logger.info("Fail Reciving Browsed Store: " + name + " cause: " + ar.cause());

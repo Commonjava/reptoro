@@ -39,7 +39,7 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
           handler.handle(Future.failedFuture(res.cause()));
         } else {
           if (res.result().statusCode() == 200) {
-            if(res.result().bodyAsJsonObject() == null) {
+            if(!res.result().getHeader("content-type").equalsIgnoreCase("application/json")) {
               handler.handle(Future.failedFuture(res.result().bodyAsString()));
             } else {
               handler.handle(Future.succeededFuture(res.result().bodyAsJsonObject()));
@@ -60,7 +60,7 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
           handler.handle(Future.failedFuture(res.cause()));
         } else {
           if (res.result().statusCode() == 200) {
-            if(res.result().bodyAsJsonObject() == null) {
+            if(!res.result().getHeader("content-type").equalsIgnoreCase("application/json")) {
               handler.handle(Future.failedFuture(res.result().bodyAsString()));
             } else {
               handler.handle(Future.succeededFuture(res.result().bodyAsJsonObject()));

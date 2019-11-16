@@ -88,18 +88,10 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
     // Change http protocol on start and then process the content
     // and then after all the content files are done then change http protocol of remote repo
     
-    repoReadStream.endHandler(hndl -> {
-      logger.info("\t\t\t ==========| END |==========");
-      logger.info("\n\n\t\t\t ==========| STARTING in 1 Hour |==========\n\n\n");
-      vertx.setTimer(6*3600000 , ar -> {
-        if(indyHttpClientService != null) {
-          processRemoteRepositories(indyHttpClientService);
-        }
-      });
-    });
+    
     
     Flowable<Long> interval =
-      Flowable.interval(10, TimeUnit.SECONDS);
+      Flowable.interval(30, TimeUnit.SECONDS);
     
     Flowable
       .zip(repoFlow, interval,(obs,timer) -> obs)
@@ -112,5 +104,25 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
     
     Pump pump = Pump.pump(repoReadStream, writeStream);
     pump.start();
+    
+    
+//    vertx.eventBus().<JsonObject>consumer("pump.command", ar -> {
+//      if(ar.body().getString("cmd").equalsIgnoreCase("stop")) {
+//        pump.stop();
+//      } else {
+//        pump.start();
+//      }
+//    });
+    
+    repoReadStream.endHandler(hndl -> {
+      pump.stop();
+      logger.info("\t\t\t ==========| END |==========");
+      logger.info("\n\n\t\t\t ==========| STARTING in 1 Hour |==========\n\n\n");
+      vertx.setTimer(6*3600000 , ar -> {
+        if(indyHttpClientService != null) {
+          processRemoteRepositories(indyHttpClientService);
+        }
+      });
+    });
   }
 }

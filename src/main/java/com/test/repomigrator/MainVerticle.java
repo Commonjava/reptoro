@@ -36,9 +36,10 @@ public class MainVerticle extends AbstractVerticle {
 	Logger logger = Logger.getLogger(this.getClass().getName());
 
 //  private OAuth2Auth oauth2;
+ 
+ 
 	@Override
-	public void start() throws Exception { // Promise<Void> startPromise
-//    logger.log(Level.INFO,"[[START]] {0}" , this.getClass().getName());
+	public void start() throws Exception {
     
     vertx.exceptionHandler(t -> {
       vertx.eventBus().publish("error.processing",
@@ -75,28 +76,29 @@ public class MainVerticle extends AbstractVerticle {
 		VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
 		// Vertx vertx = Vertx.vertx(vertxOptions);
 
-		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
-		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
+//		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
+//		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
 
 		// create OAuth 2 instance for Keycloak
 //	oauth2 = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, configRetriever.getCachedConfig() );
-		configRetriever.getConfig(conf -> {
+//		configRetriever.getConfig(conf -> {
 		  // deploy services first...
 		  vertx.deployVerticle("com.test.repomigrator.verticles.IndyHttpClientVerticle", ar -> {
         logger.info("IndyHttpClientVerticle Deployed, msg: " + ar.result());
         
-        vertx.deployVerticle(new RemoteRepositoryProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-        vertx.deployVerticle(new BrowsedProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-        vertx.deployVerticle(new ListingUrlProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-        vertx.deployVerticle(new ContentProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-        vertx.deployVerticle(new RepoValidationProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
+        vertx.deployVerticle("com.test.repomigrator.RemoteRepositoryProcessing");
+        vertx.deployVerticle("com.test.repomigrator.BrowsedProcessing");
+        vertx.deployVerticle("com.test.repomigrator.ListingUrlProcessing");
+        vertx.deployVerticle("com.test.repomigrator.ContentProcessing");
+        vertx.deployVerticle("com.test.repomigrator.RepoValidationProcessing");
+        vertx.deployVerticle("com.test.repomigrator.ErrorProcessing");
+        vertx.deployVerticle("com.test.repomigrator.DBProcessingVerticle");
       });
 		  
-			vertx.deployVerticle(new ErrorProcessing());
-			vertx.deployVerticle(new DBProcessingVerticle(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-		});
+			
+			
+//		});
 
-		// TODO: 11/6/19   Routing for HTTP SSE and REST handling ...
 		HttpServer server = vertx.createHttpServer();
 		Router router = Router.router(vertx);
 

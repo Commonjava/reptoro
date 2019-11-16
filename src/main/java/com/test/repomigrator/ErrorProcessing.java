@@ -22,7 +22,7 @@ public class ErrorProcessing extends AbstractVerticle {
     
     vertx.eventBus().<JsonObject>consumer("error.processing", res -> {
       errorList.add(res.body());
-      logger.info(res.body().encodePrettily());
+//      logger.info(res.body().encodePrettily());
     })
       .exceptionHandler(t -> {
         JsonObject errorData =

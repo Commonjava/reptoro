@@ -51,7 +51,7 @@ public class ListingUrlProcessing extends AbstractVerticle {
     circuitBreaker.halfOpenHandler(v -> logger.info("\n\n\n\t\t[ Indy Endpoint circuit breaker is half open " + Instant.now() + " ]\n\n\n"));
     circuitBreaker.retryPolicy(retryCount -> retryCount * 100L);
     
-    healthChecks.register("indy-test-health", 1000, future -> {
+    healthChecks.register("indy-test-health", 2*60000, future -> {
       if(circuitBreaker.state().equals(CircuitBreakerState.CLOSED)) {
         future.complete(Status.OK());
       } else {
@@ -97,6 +97,8 @@ public class ListingUrlProcessing extends AbstractVerticle {
     
       JsonObject browsedStore = res.body();
       
+      vertx.eventBus().publish("pump.command", new JsonObject().put("cmd", "stop"));
+      
       if (browsedStore != null && browsedStore.getJsonArray("listingUrls") != null && !browsedStore.getJsonArray("listingUrls").isEmpty()) {
         JsonArray listingUrlsJsonArr = browsedStore.getJsonArray("listingUrls");
         
@@ -108,9 +110,14 @@ public class ListingUrlProcessing extends AbstractVerticle {
         listingUrlsFlowable
           .map(lu -> transformListingUrls(lu, browsedStore))
           .subscribe(readStream);
+        
+//        readStream.endHandler(ar -> {
+//          logger.info("\t\t[ PROCESSING: " + browsedStore.getString("storeKey") + "]");
+//          vertx.eventBus().publish("pump.command", new JsonObject().put("cmd", "start"));
+//        });
   
         Flowable<Long> interval =
-          Flowable.interval(10, TimeUnit.SECONDS);
+          Flowable.interval(100, TimeUnit.MILLISECONDS);
   
         Flowable
           .zip(listingUrlsFlowable, interval,(obs,timer) -> obs)
@@ -120,8 +127,8 @@ public class ListingUrlProcessing extends AbstractVerticle {
       
         Pump pump = Pump.pump(readStream, writeStream);
         pump.start();
-      
-      
+        
+        
       }
   }
   
@@ -164,9 +171,10 @@ public class ListingUrlProcessing extends AbstractVerticle {
             JsonObject result = ar.result();
             if(result != null && !result.containsKey("state")) {
               vertx.eventBus().publish("content.url.processing", result);
-            } else {
-              logger.info(result.encodePrettily()); // Circuit Breaker Open Circuit Messages...
             }
+//              else {
+//              logger.info(result.encodePrettily()); // Circuit Breaker Open Circuit Messages...
+//            }
           }
           else {
             Throwable cause = ar.cause();
