@@ -91,7 +91,7 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
     
     
     Flowable<Long> interval =
-      Flowable.interval(30, TimeUnit.SECONDS);
+      Flowable.interval(20, TimeUnit.SECONDS);
     
     Flowable
       .zip(repoFlow, interval,(obs,timer) -> obs)

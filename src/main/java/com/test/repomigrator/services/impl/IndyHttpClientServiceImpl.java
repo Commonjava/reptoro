@@ -1,6 +1,10 @@
 package com.test.repomigrator.services.impl;
 
 import com.test.repomigrator.services.IndyHttpClientService;
+import io.vertx.config.ConfigRetriever;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
+import io.vertx.config.impl.ConfigRetrieverImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -9,6 +13,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -17,12 +22,14 @@ import java.util.Map;
  */
 public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   
-  static String MAVEN_REPOS = "/api/admin/stores/maven/remote";
-  static String NPM_REPOS = "/api/admin/stores/npm/remote";
-  static String BROWSED_STORES = "/api/browse/maven/remote/";
+  static String INDY_API = "/api";
+  static String MAVEN_REPOS = "/admin/stores/maven/remote";
+  static String NPM_REPOS = "/admin/stores/npm/remote";
+  static String BROWSED_STORES = "/browse/maven/remote/";
   
   Vertx vertx;
   WebClient client;
+  
   
   public IndyHttpClientServiceImpl(WebClient client) {
     this.client = client;
@@ -33,7 +40,7 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   public void getAllRemoteRepositories(String packageType, Handler<AsyncResult<JsonObject>> handler) {
     client
       .get(80, "indy-admin-stage.psi.redhat.com",
-        (packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? MAVEN_REPOS : NPM_REPOS)
+        (packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? INDY_API+MAVEN_REPOS : INDY_API+NPM_REPOS)
       .send(res -> {
         if (res.failed()) {
           handler.handle(Future.failedFuture(res.cause()));
@@ -54,7 +61,7 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   @Override
   public void getListingsFromBrowsedStore(String name, Handler<AsyncResult<JsonObject>> handler) {
     client
-      .get(80, "indy-admin-stage.psi.redhat.com", BROWSED_STORES + name)
+      .get(80, "indy-admin-stage.psi.redhat.com", INDY_API+BROWSED_STORES+name)
       .send(res -> {
         if (res.failed()) {
           handler.handle(Future.failedFuture(res.cause()));
@@ -165,4 +172,8 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   }
   
   
+  private ConfigRetrieverOptions getConfigurationOptions() {
+    JsonObject path = new JsonObject().put("path", "config/config.json");
+    return new ConfigRetrieverOptions().addStore(new ConfigStoreOptions().setType("file").setConfig(path));
+  }
 }

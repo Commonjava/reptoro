@@ -64,6 +64,8 @@ public class ContentProcessing extends AbstractVerticle {
     if(msgBody.containsKey("compare") && msgBody.getBoolean("compare")) {
       compareContents(msgBody);
       contentList.add(msgBody);
+      String[] sourcesUrl = msgBody.getString("sources").split("/");
+      logger.info("Comparing file: " + sourcesUrl[sourcesUrl.length-1]);
     } else {
       contentList.add(msgBody);
     }
@@ -144,7 +146,7 @@ public class ContentProcessing extends AbstractVerticle {
 //    }
 //  }
   
-  void compareContents(JsonObject urlListing) {
+  void compareContents(final JsonObject urlListing) {
     URL listingUrl = null;
     try {
       listingUrl = new URL(urlListing.getString("sources"));
@@ -161,8 +163,10 @@ public class ContentProcessing extends AbstractVerticle {
             boolean repoValidChange = false;
             while (iterator.hasNext()) {
               Map.Entry<String, String> headerTuple = iterator.next();
-              logger.info("[[HEADERS]] " + headerTuple.getKey() + " : " + headerTuple.getValue());
-              switch (headerTuple.getKey()) {
+              String headerKey = headerTuple.getKey();
+              String headerValue = headerTuple.getValue();
+              logger.info("[[HEADERS]] " + headerKey + " : " + headerValue);
+              switch (headerKey.toUpperCase()) {
                 case X_CHECKSUM_MD5:
                   logger.info("[[X_CHECKSUM_MD5]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + headerTuple.getValue());
                   if(urlListing.getJsonObject("headers").getString(INDY_MD5).equalsIgnoreCase(headerTuple.getValue())) {
@@ -180,15 +184,15 @@ public class ContentProcessing extends AbstractVerticle {
                     repoValidChange = true;
                     break;
                   }
-                default:
-                  logger.info("[[DEFAULT]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + result.headers().get(ETAG));
-                  if(urlListing.getJsonObject("headers").getString(INDY_ETAG) != null && urlListing.getJsonObject("headers").getString(INDY_ETAG).contains(result.headers().get(ETAG))) {
-                    repoValidChange = true;
-                    break;
-                  } else {
-                    repoValidChange = false;
-                  }
-                  break;
+//                default:
+//                  logger.info("[[DEFAULT]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + result.headers().get(ETAG));
+//                  if(urlListing.getJsonObject("headers").getString(INDY_ETAG) != null && urlListing.getJsonObject("headers").getString(INDY_ETAG).contains(result.headers().get(ETAG))) {
+//                    repoValidChange = true;
+//                    break;
+//                  } else {
+//                    repoValidChange = false;
+//                  }
+//                  break;
               }
               urlListing.put("validated", true);
               if(repoValidChange) {

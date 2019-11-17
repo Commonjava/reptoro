@@ -76,15 +76,18 @@ public class MainVerticle extends AbstractVerticle {
 		VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
 		// Vertx vertx = Vertx.vertx(vertxOptions);
 
-//		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
-//		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
+		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
+		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
+		
 
 		// create OAuth 2 instance for Keycloak
 //	oauth2 = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, configRetriever.getCachedConfig() );
+
+
 //		configRetriever.getConfig(conf -> {
 		  // deploy services first...
 		  vertx.deployVerticle("com.test.repomigrator.verticles.IndyHttpClientVerticle", ar -> {
-        logger.info("IndyHttpClientVerticle Deployed, msg: " + ar.result());
+        logger.info("IndyHttpClientVerticle Deployed, id: " + ar.result());
         
         vertx.deployVerticle("com.test.repomigrator.RemoteRepositoryProcessing");
         vertx.deployVerticle("com.test.repomigrator.BrowsedProcessing");
@@ -94,9 +97,6 @@ public class MainVerticle extends AbstractVerticle {
         vertx.deployVerticle("com.test.repomigrator.ErrorProcessing");
         vertx.deployVerticle("com.test.repomigrator.DBProcessingVerticle");
       });
-		  
-			
-			
 //		});
 
 		HttpServer server = vertx.createHttpServer();

@@ -140,7 +140,7 @@ public class ListingUrlProcessing extends AbstractVerticle {
   
     if(!listingUrl.endsWith("/")) {
       // it's a File
-      if(!listingUrl.endsWith("md5") || !listingUrl.endsWith("sha1") || !listingUrl.endsWith("txt")) {
+      if(!listingUrl.endsWith("md5") && !listingUrl.endsWith("sha1") && !listingUrl.endsWith("txt")) {
       
         Handler<Promise<JsonObject>> processor = future -> {
           indyHttpClientService.getAndCompareHeadersAsync(listingUrlsJson , ar -> {
