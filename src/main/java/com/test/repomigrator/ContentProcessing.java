@@ -1,7 +1,9 @@
 package com.test.repomigrator;
 
+import com.test.repomigrator.services.IndyHttpClientService;
 import io.reactivex.Flowable;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
@@ -64,8 +66,8 @@ public class ContentProcessing extends AbstractVerticle {
     if(msgBody.containsKey("compare") && msgBody.getBoolean("compare")) {
       compareContents(msgBody);
       contentList.add(msgBody);
-      String[] sourcesUrl = msgBody.getString("sources").split("/");
-      logger.info("Comparing file: " + sourcesUrl[sourcesUrl.length-1]);
+//      String[] sourcesUrl = msgBody.getString("sources").split("/");
+//      logger.info("Comparing file: " + sourcesUrl[sourcesUrl.length-1]);
     } else {
       contentList.add(msgBody);
     }
@@ -147,81 +149,134 @@ public class ContentProcessing extends AbstractVerticle {
 //  }
   
   void compareContents(final JsonObject urlListing) {
-    URL listingUrl = null;
-    try {
-      listingUrl = new URL(urlListing.getString("sources"));
-      URL httpsListingUrl = new URL(HTTPS, listingUrl.getHost(), listingUrl.getPort() , listingUrl.getFile());
-      // logger.info(httpsListingUrl.toString());
-      getClient()
-        .headAbs(httpsListingUrl.toString())
-        .ssl(true)
-        .send(res -> {
+  
+    IndyHttpClientService indyHttpClientService =
+      IndyHttpClientService.createProxy(vertx, RemoteRepositoryProcessing.INDY_HTTP_CLIENT_SERVICE);
+    
+    indyHttpClientService.getAndCompareSourceHeaders(urlListing, res -> {
+      if(res.failed()) {
+        logger.info("Something wrong with source HTTPS request! " + res.cause() );// FAILED TO OPEN [ SSL ERROR ] (server_certificate_pem)
+      } else {
+        JsonObject httpSourceHeaders = res.result();
+  
+        boolean headerKeyMatch =
+          httpSourceHeaders.stream()
+            .anyMatch(entries -> anyHeaderKeyMatch(entries, urlListing));
+        
+        if(headerKeyMatch) {
+          boolean headerValueMatch =
+            httpSourceHeaders.stream()
+              .anyMatch(entry -> anyHeaderValueMatch(entry, urlListing));
+          if(headerValueMatch) {
+            urlListing.put("validated", true);
+            vertx.eventBus().publish("remote.repository.valid.change", urlListing);
+          } else {
+            urlListing.put("validssl", false);
+            vertx.eventBus().publish("remote.repository.not.valid.change", urlListing);
+          }
+        } else {
+          // There is no source url header key which is matching to indy content url header key
+          logger.info("No Header Key is matching! " + urlListing.getString("sources"));
+        }
+        
+      }
+    });
+    
+//    URL listingUrl = null;
+//    try {
+//      listingUrl = new URL(urlListing.getString("sources"));
+//      URL httpsListingUrl = new URL(HTTPS, listingUrl.getHost(), listingUrl.getPort() , listingUrl.getFile());
+//      logger.info("\n\n\n" + httpsListingUrl.toString() + "\n\n");
+//      getClient()
+//        .headAbs(httpsListingUrl.toString())
+//        .ssl(true)
+//        .send(res -> {
+//          final JsonObject urlListingJson = urlListing;
+//          if(res.succeeded()) {
+//
+//            HttpResponse<Buffer> result1 = res.result();
+//            MultiMap headers = result1.headers();
+//            boolean headerKeyMatch =
+//              headers.entries().stream()
+//              .anyMatch(entries -> anyHeaderKeyMatch(entries, urlListingJson));
+//
+//            if(headerKeyMatch) {
+//              boolean headerValueMatch =
+//                headers.entries().stream()
+//                .anyMatch(entry -> anyHeaderValueMatch(entry, urlListingJson));
+//              if(headerValueMatch) {
+//                urlListingJson.put("validated", true);
+//                vertx.eventBus().publish("remote.repository.valid.change", urlListingJson);
+//              } else {
+//                urlListingJson.put("validssl", false);
+//                vertx.eventBus().publish("remote.repository.not.valid.change", urlListingJson);
+//              }
+//            } else {
+//              // There is no source url header key which is matching to indy content url header key
+//              logger.info("No Header Key is matching! " + urlListingJson.getString("sources"));
+//            }
 
-          if(res.succeeded()) {
-            HttpResponse<Buffer> result = res.result();
-            Iterator<Map.Entry<String, String>> iterator = result.headers().iterator();
-            boolean repoValidChange = false;
-            while (iterator.hasNext()) {
-              Map.Entry<String, String> headerTuple = iterator.next();
-              String headerKey = headerTuple.getKey();
-              String headerValue = headerTuple.getValue();
-              logger.info("[[HEADERS]] " + headerKey + " : " + headerValue);
-              switch (headerKey.toUpperCase()) {
-                case X_CHECKSUM_MD5:
-                  logger.info("[[X_CHECKSUM_MD5]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + headerTuple.getValue());
-                  if(urlListing.getJsonObject("headers").getString(INDY_MD5).equalsIgnoreCase(headerTuple.getValue())) {
-                    repoValidChange = true;
-                    break;
-                  }
-                case X_CHECKSUM_SHA1:
-                  if(urlListing.getJsonObject("headers").getString(INDY_SHA1).equalsIgnoreCase(headerTuple.getValue())){
-                    repoValidChange = true;
-                    break;
-                  }
-                case ETAG:
-                  logger.info("[[ETAG]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + headerTuple.getValue());
-                  if(urlListing.getJsonObject("headers").getString(INDY_ETAG).equalsIgnoreCase(headerTuple.getValue())) {
-                    repoValidChange = true;
-                    break;
-                  }
-//                default:
-//                  logger.info("[[DEFAULT]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + result.headers().get(ETAG));
-//                  if(urlListing.getJsonObject("headers").getString(INDY_ETAG) != null && urlListing.getJsonObject("headers").getString(INDY_ETAG).contains(result.headers().get(ETAG))) {
+//            HttpResponse<Buffer> result = res.result();
+//            Iterator<Map.Entry<String, String>> iterator = result.headers().iterator();
+//            boolean repoValidChange = false;
+//            while (iterator.hasNext()) {
+//              Map.Entry<String, String> headerTuple = iterator.next();
+//              String headerKey = headerTuple.getKey();
+//              String headerValue = headerTuple.getValue();
+//              logger.info("[[HEADERS]] " + headerKey + " : " + headerValue);
+//              switch (headerKey.toUpperCase()) {
+//                case X_CHECKSUM_MD5:
+//                  logger.info("[[X_CHECKSUM_MD5]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + headerTuple.getValue());
+//                  if(urlListing.getJsonObject("headers").getString(INDY_MD5).equalsIgnoreCase(headerTuple.getValue())) {
 //                    repoValidChange = true;
 //                    break;
-//                  } else {
-//                    repoValidChange = false;
 //                  }
-//                  break;
-              }
-              urlListing.put("validated", true);
-              if(repoValidChange) {
-                urlListing.put("validssl",true);
-                vertx.eventBus().publish("remote.repository.valid.change", urlListing);
-              }else {
-                urlListing.put("validssl", false);
-                vertx.eventBus().publish("remote.repository.not.valid.change", urlListing);
-              }
-            }
-          }
+//                case X_CHECKSUM_SHA1:
+//                  if(urlListing.getJsonObject("headers").getString(INDY_SHA1).equalsIgnoreCase(headerTuple.getValue())){
+//                    repoValidChange = true;
+//                    break;
+//                  }
+//                case ETAG:
+//                  logger.info("[[ETAG]] COMPARING: " + urlListing.getJsonObject("headers").getString(INDY_ETAG) + " WITH " + headerTuple.getValue());
+//                  if(urlListing.getJsonObject("headers").getString(INDY_ETAG).equalsIgnoreCase(headerTuple.getValue())) {
+//                    repoValidChange = true;
+//                    break;
+//                  }
+//              }
+//              urlListing.put("validated", true);
+//              if(repoValidChange) {
+//                urlListing.put("validssl",true);
+//                vertx.eventBus().publish("remote.repository.valid.change", urlListing);
+//              }else {
+//                urlListing.put("validssl", false);
+//                vertx.eventBus().publish("remote.repository.not.valid.change", urlListing);
+//              }
+//            }
+//          }
 
-        });
-    }
-    catch (MalformedURLException t) {
-      JsonObject errorData =
-        new io.vertx.core.json.JsonObject()
-          .put("source", getClass().getSimpleName().join(".", "content.compare.error"))
-          .put("cause", t.getMessage());
-      vertx.eventBus().publish("error.processing", errorData );
-    }
-    catch (Exception e) {
-      JsonObject errorData =
-        new io.vertx.core.json.JsonObject()
-          .put("source", getClass().getSimpleName().join(".", "content.compare.error"))
-          .put("cause", e.getMessage());
-      vertx.eventBus().publish("error.processing", errorData );
-    }
+//        });
+//    }
+//    catch (MalformedURLException t) {
+//      JsonObject errorData =
+//        new io.vertx.core.json.JsonObject()
+//          .put("source", getClass().getSimpleName().join(".", "content.compare.error"))
+//          .put("cause", t.getMessage());
+//      vertx.eventBus().publish("error.processing", errorData );
+//    }
+//    catch (Exception e) {
+//      JsonObject errorData =
+//        new io.vertx.core.json.JsonObject()
+//          .put("source", getClass().getSimpleName().join(".", "content.compare.error"))
+//          .put("cause", e.getMessage());
+//      vertx.eventBus().publish("error.processing", errorData );
+//    }
 
+  }
+  
+  private boolean anyHeaderValueMatch(Map.Entry<String, Object> entry, JsonObject urlListingJson) {
+    return urlListingJson.getJsonObject("headers")
+      .getMap().values().stream()
+      .anyMatch(value -> value.toString().equalsIgnoreCase(String.valueOf(entry.getValue())));
   }
   
   WebClient getClient() {
@@ -234,6 +289,12 @@ public class ContentProcessing extends AbstractVerticle {
        ;
 //    return WebClient.create(vertx);
     return WebClient.create(vertx,webClientOptions);
+  }
+  
+  private boolean anyHeaderKeyMatch(Map.Entry<String,Object> values,JsonObject urlListing) {
+    return urlListing.getJsonObject("headers")
+      .getMap().keySet().stream()
+      .anyMatch(key -> key.equalsIgnoreCase(values.getKey()));
   }
   
 }

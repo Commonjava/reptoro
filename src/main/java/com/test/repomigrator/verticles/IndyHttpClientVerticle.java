@@ -8,6 +8,8 @@ package com.test.repomigrator.verticles;
 import com.test.repomigrator.services.IndyHttpClientService;
 import com.test.repomigrator.services.impl.IndyHttpClientServiceImpl;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.net.OpenSSLEngineOptions;
+import io.vertx.core.net.SSLEngineOptions;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.serviceproxy.ServiceBinder;
@@ -21,8 +23,15 @@ public class IndyHttpClientVerticle extends AbstractVerticle {
   
   @Override
   public void start() throws Exception {
+    WebClientOptions webOptions =
+      new WebClientOptions()
+        .setKeepAlive(true)
+        .setTrustAll(true)
+//        .setSslEngineOptions(new OpenSSLEngineOptions().setSessionCacheEnabled(true))
+      ;
     
-    IndyHttpClientService service = new IndyHttpClientServiceImpl(WebClient.create(vertx,new WebClientOptions().setKeepAlive(true)));
+    IndyHttpClientService service = new IndyHttpClientServiceImpl(WebClient.create(vertx,webOptions));
+    
     
     new ServiceBinder(vertx)
       .setAddress("indy.http.client.service")

@@ -44,16 +44,19 @@ public class BrowsedProcessing extends AbstractVerticle {
       
       JsonObject remoteRepo = res.body();
       String storeKey = remoteRepo.getString("key");
+      String cert = remoteRepo.getString("server_certificate_pem");
       String[] splitStoreKey = storeKey.split(":");
       String name = splitStoreKey[2];
       
-      logger.info("\t\t\t========= < " + counter.incrementAndGet() + " : " + name + " > ===========");
+      
       indyHttpClientService.getListingsFromBrowsedStore(name , ar -> {
         if(ar.failed()) {
           logger.info("Fail Reciving Browsed Store: " + name + " cause: " + ar.cause());
         } else {
+          logger.info("\t\t\t========= < " + counter.incrementAndGet() + " : " + name + " > ===========");
           JsonObject result = ar.result();
           if(result.getJsonArray("listingUrls") != null && !result.getJsonArray("listingUrls").isEmpty()) {
+            result.put("cert", (cert == null || cert.isEmpty() ) ? cert : "" );
             vertx.eventBus().<JsonObject>publish("listings.urls", result);
           }
         }

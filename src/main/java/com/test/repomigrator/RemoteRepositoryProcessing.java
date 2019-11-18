@@ -18,20 +18,15 @@ import java.util.stream.Collectors;
 
 public class RemoteRepositoryProcessing extends AbstractVerticle {
   
-  static final String INDY_HTTP_CLIENT_SERVICE = "indy.http.client.service";
-  
+  public static final String INDY_HTTP_CLIENT_SERVICE = "indy.http.client.service";
   Logger logger = Logger.getLogger(this.getClass().getName());
-  
   IndyHttpClientService indyHttpClientService;
   
   @Override
   public void start() throws Exception {
     
     indyHttpClientService = IndyHttpClientService.createProxy(vertx.getDelegate(), INDY_HTTP_CLIENT_SERVICE);
-    
     processRemoteRepositories(indyHttpClientService);
-    
-    
   }
   
   private void processRemoteRepositories(IndyHttpClientService indyHttpClientService) {
@@ -88,8 +83,6 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
     // Change http protocol on start and then process the content
     // and then after all the content files are done then change http protocol of remote repo
     
-    
-    
     Flowable<Long> interval =
       Flowable.interval(20, TimeUnit.SECONDS);
     
@@ -98,21 +91,9 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
       .subscribe(repoReadStream);
     
     writeStream.subscribe(bsPublisher.toSubscriber());
-
-//    on end handler for setting timer for next read ...
-//    repoReadStream.endHandler();
     
     Pump pump = Pump.pump(repoReadStream, writeStream);
     pump.start();
-    
-    
-//    vertx.eventBus().<JsonObject>consumer("pump.command", ar -> {
-//      if(ar.body().getString("cmd").equalsIgnoreCase("stop")) {
-//        pump.stop();
-//      } else {
-//        pump.start();
-//      }
-//    });
     
     repoReadStream.endHandler(hndl -> {
       pump.stop();

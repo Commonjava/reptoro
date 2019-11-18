@@ -12,11 +12,11 @@ public class RepoValidationProcessing extends AbstractVerticle {
   @Override
   public void start() throws Exception {
     vertx.eventBus().<JsonObject>consumer("remote.repository.valid.change", res -> {
-      logger.info("(( VALID CHANGE ))");
-      logger.info(res.body().getString("listingUrl"));
-      logger.info(res.body().getString("sources"));
-      logger.info(String.valueOf(ContentProcessing.contentList.size()));
-      logger.info("========================================================");
+//      logger.info("(( VALID CHANGE ))");
+//      logger.info(res.body().getString("listingUrl"));
+//      logger.info(res.body().getString("sources"));
+//      logger.info(String.valueOf(ContentProcessing.contentList.size()));
+//      logger.info("========================================================");
     });
   
     vertx.eventBus().<JsonObject>consumer("remote.repository.not.valid.change", res -> {

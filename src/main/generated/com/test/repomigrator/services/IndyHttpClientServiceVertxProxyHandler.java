@@ -146,6 +146,11 @@ public class IndyHttpClientServiceVertxProxyHandler extends ProxyHandler {
                         HelperUtils.createHandler(msg));
           break;
         }
+        case "getAndCompareSourceHeaders": {
+          service.getAndCompareSourceHeaders((io.vertx.core.json.JsonObject)json.getValue("listingUrl"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
         default: throw new IllegalStateException("Invalid action: " + action);
       }
     } catch (Throwable t) {

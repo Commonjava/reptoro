@@ -177,4 +177,23 @@ public class IndyHttpClientServiceVertxEBProxy implements IndyHttpClientService 
       }
     });
   }
+  @Override
+  public  void getAndCompareSourceHeaders(JsonObject listingUrl, Handler<AsyncResult<JsonObject>> handler){
+    if (closed) {
+      handler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
+      return;
+    }
+    JsonObject _json = new JsonObject();
+    _json.put("listingUrl", listingUrl);
+
+    DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
+    _deliveryOptions.addHeader("action", "getAndCompareSourceHeaders");
+    _vertx.eventBus().<JsonObject>request(_address, _json, _deliveryOptions, res -> {
+      if (res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        handler.handle(Future.succeededFuture(res.result().body()));
+      }
+    });
+  }
 }

@@ -76,8 +76,8 @@ public class MainVerticle extends AbstractVerticle {
 		VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
 		// Vertx vertx = Vertx.vertx(vertxOptions);
 
-		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
-		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
+//		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
+//		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
 		
 
 		// create OAuth 2 instance for Keycloak
@@ -92,6 +92,7 @@ public class MainVerticle extends AbstractVerticle {
         vertx.deployVerticle("com.test.repomigrator.RemoteRepositoryProcessing");
         vertx.deployVerticle("com.test.repomigrator.BrowsedProcessing");
         vertx.deployVerticle("com.test.repomigrator.ListingUrlProcessing");
+        vertx.deployVerticle("com.test.repomigrator.verticles.ListingProcessingVerticle");
         vertx.deployVerticle("com.test.repomigrator.ContentProcessing");
         vertx.deployVerticle("com.test.repomigrator.RepoValidationProcessing");
         vertx.deployVerticle("com.test.repomigrator.ErrorProcessing");

@@ -30,6 +30,8 @@ public interface IndyHttpClientService {
   
   void getContentSync(JsonObject lu ,Handler<AsyncResult<JsonObject>> handler);
   void getAndCompareHeadersSync(JsonObject lu ,Handler<AsyncResult<JsonObject>> handler);
+  
+  void getAndCompareSourceHeaders(JsonObject listingUrl,Handler<AsyncResult<JsonObject>> handler);
 	
 	static IndyHttpClientService createProxy(Vertx vertx, String address) {
 		return new IndyHttpClientServiceVertxEBProxy(vertx, address);
