@@ -8,15 +8,16 @@ import io.vertx.config.impl.ConfigRetrieverImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
+//import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.client.WebClientSession;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
+import io.vertx.reactivex.ext.web.client.WebClient;
 
 import javax.swing.plaf.synth.SynthListUI;
 import java.io.InputStream;
@@ -51,20 +52,22 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
     client
       .get(80, "indy-admin-stage.psi.redhat.com",
         (packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? INDY_API+MAVEN_REPOS : INDY_API+NPM_REPOS)
-      .send(res -> {
-        if (res.failed()) {
-          handler.handle(Future.failedFuture(res.cause()));
-        } else {
-          if (res.result().statusCode() == 200) {
-            if(!res.result().getHeader("content-type").equalsIgnoreCase("application/json")) {
-              handler.handle(Future.failedFuture(res.result().bodyAsString()));
+//      .send(res -> {
+      .rxSend()
+      .subscribe(res -> {
+//        if (res.failed()) {
+//          handler.handle(Future.failedFuture(res.cause()));
+//        } else {
+          if (res.statusCode() == 200) {
+            if(!res.getHeader("content-type").equalsIgnoreCase("application/json")) {
+              handler.handle(Future.failedFuture(res.bodyAsString()));
             } else {
-              handler.handle(Future.succeededFuture(res.result().bodyAsJsonObject()));
+              handler.handle(Future.succeededFuture(res.bodyAsJsonObject()));
             }
           } else {
-            handler.handle(Future.failedFuture(res.result().bodyAsString()));
+            handler.handle(Future.failedFuture(res.bodyAsString()));
           }
-        }
+//        }
       });
   }
   
@@ -72,28 +75,30 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   public void getListingsFromBrowsedStore(String name, Handler<AsyncResult<JsonObject>> handler) {
     client
       .get(80, "indy-admin-stage.psi.redhat.com", INDY_API+BROWSED_STORES+name)
-      .send(res -> {
-        if (res.failed()) {
-          handler.handle(Future.failedFuture(res.cause()));
-        } else {
-          if (res.result().statusCode() == 200) {
-            if(!res.result().getHeader("content-type").equalsIgnoreCase("application/json")) {
-              handler.handle(Future.failedFuture(res.result().bodyAsString()));
+//      .send(res -> {
+      .rxSend()
+      .subscribe(res -> {
+//        if (res.failed()) {
+//          handler.handle(Future.failedFuture(res.cause()));
+//        } else {
+          if (res.statusCode() == 200) {
+            if(!res.getHeader("content-type").equalsIgnoreCase("application/json")) {
+              handler.handle(Future.failedFuture(res.bodyAsString()));
             } else {
-              handler.handle(Future.succeededFuture(res.result().bodyAsJsonObject()));
+              handler.handle(Future.succeededFuture(res.bodyAsJsonObject()));
             }
           } else {
-            handler.handle(Future.failedFuture(res.result().bodyAsString()));
+            handler.handle(Future.failedFuture(res.bodyAsString()));
           }
-        }
+//        }
       });
   }
   
   @Override
   public void getContentAsync(JsonObject lu, Handler<AsyncResult<JsonObject>> handler) {
-    
-    io.vertx.reactivex.ext.web.client.WebClient.create(vertx, new WebClientOptions().setKeepAlive(true))
-//      client
+  
+//    io.vertx.reactivex.ext.web.client.WebClient.create(vertx, new WebClientOptions().setKeepAlive(true))
+      client
       .getAbs(lu.getString("listingUrl"))
       .rxSend()
       .subscribe(res -> {
@@ -192,9 +197,12 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
       lu = new URL(listingUrl.getString("sources"));
       URL httpsListingUrl = new URL(HTTPS, lu.getHost(), lu.getPort(), lu.getFile());
       if(!listingUrl.getString("cert").isEmpty()) {
+        
+        System.out.println("Setting Cert for this https call: \n" + httpsListingUrl);
+        
         JksOptions cert = new JksOptions().setValue(Buffer.buffer(listingUrl.getString("cert").getBytes()));
         WebClientOptions options = new WebClientOptions().setSsl(true).setTrustStoreOptions(cert);
-        client1 = WebClient.create(vertx.getDelegate(), options);
+        client1 = WebClient.create(vertx, options);
       }
       if(client1 != null) {
         client1
@@ -205,8 +213,13 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
               handler.handle(Future.failedFuture(res.cause()));
             } else {
               if (res.result().statusCode() == 200) {
-                HttpResponse<Buffer> result = res.result();
-                MultiMap headers = result.headers();
+  
+                System.out.println("SUCCESS!");
+                
+                io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer> result = res.result();
+  
+                io.vertx.reactivex.core.MultiMap headers = result.headers();
+                
                 Map<String, Object> sourceHeaders = new HashMap<>();
                 Iterator<Map.Entry<String, String>> iterator = headers.iterator();
                 while (iterator.hasNext()) {
@@ -228,8 +241,10 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
               handler.handle(Future.failedFuture(res.cause()));
             } else {
               if (res.result().statusCode() == 200) {
-                HttpResponse<Buffer> result = res.result();
+                HttpResponse<io.vertx.reactivex.core.buffer.Buffer> result = res.result();
+  
                 MultiMap headers = result.headers();
+                
                 Map<String, Object> sourceHeaders = new HashMap<>();
                 Iterator<Map.Entry<String, String>> iterator = headers.iterator();
                 while (iterator.hasNext()) {

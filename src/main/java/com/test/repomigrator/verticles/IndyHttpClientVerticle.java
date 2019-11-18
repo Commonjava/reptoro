@@ -7,11 +7,11 @@ package com.test.repomigrator.verticles;
 
 import com.test.repomigrator.services.IndyHttpClientService;
 import com.test.repomigrator.services.impl.IndyHttpClientServiceImpl;
-import io.vertx.core.AbstractVerticle;
 import io.vertx.core.net.OpenSSLEngineOptions;
 import io.vertx.core.net.SSLEngineOptions;
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.serviceproxy.ServiceBinder;
 
 /**
@@ -33,7 +33,7 @@ public class IndyHttpClientVerticle extends AbstractVerticle {
     IndyHttpClientService service = new IndyHttpClientServiceImpl(WebClient.create(vertx,webOptions));
     
     
-    new ServiceBinder(vertx)
+    new ServiceBinder(vertx.getDelegate())
       .setAddress("indy.http.client.service")
       .register(IndyHttpClientService.class, service);
   }

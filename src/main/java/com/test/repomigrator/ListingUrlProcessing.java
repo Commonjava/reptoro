@@ -113,7 +113,7 @@ public class ListingUrlProcessing extends AbstractVerticle {
           .subscribe(readStream);
   
         Flowable<Long> interval =
-          Flowable.interval(100, TimeUnit.MILLISECONDS);
+          Flowable.interval(200, TimeUnit.MILLISECONDS);
   
         Flowable
           .zip(listingUrlsFlowable, interval,(obs,timer) -> obs)
