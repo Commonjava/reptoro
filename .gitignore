@@ -15,6 +15,7 @@ local.properties
 .loadpath
 .recommenders
 .classpath
+cert.pem
 
 # External tool builders
 .externalToolBuilders/
