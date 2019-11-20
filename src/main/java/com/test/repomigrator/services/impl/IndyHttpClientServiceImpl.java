@@ -4,26 +4,17 @@ import com.test.repomigrator.services.IndyHttpClientService;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
-import io.vertx.config.impl.ConfigRetrieverImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.JksOptions;
 //import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.ext.web.client.WebClientSession;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 
-import javax.swing.plaf.synth.SynthListUI;
-import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -33,13 +24,18 @@ import java.util.Map;
  */
 public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   
-  static String INDY_API = "/api";
+  static String INDY_API;
   static String MAVEN_REPOS = "/admin/stores/maven/remote";
   static String NPM_REPOS = "/admin/stores/npm/remote";
   static String BROWSED_STORES = "/browse/maven/remote/";
   
   Vertx vertx;
   WebClient client;
+  JsonObject config;
+  String indyHost;
+  Integer indyPort;
+  String indyUser;
+  String indyPass;
   
   
   public IndyHttpClientServiceImpl(WebClient client) {
@@ -47,17 +43,26 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
     this.vertx = Vertx.vertx();
   }
   
+  public IndyHttpClientServiceImpl(WebClient client,JsonObject config) {
+    this.client = client;
+    this.vertx = Vertx.vertx();
+    this.config = config;
+    this.indyHost = config.getString("indy.host");
+    this.indyPort = config.getInteger("indy.port");
+    this.indyUser = config.getString("indy.user");
+    this.indyPass = config.getString("indy.pass");
+    this.INDY_API = config.getString("indy.api");
+  }
+  
   @Override
   public void getAllRemoteRepositories(String packageType, Handler<AsyncResult<JsonObject>> handler) {
+    System.out.println("Indy Address: " + "http://" + indyHost + ":" + indyPort + INDY_API + MAVEN_REPOS );
     client
-      .get(80, "indy-admin-stage.psi.redhat.com",
+      .get(indyPort, indyHost,
         (packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? INDY_API+MAVEN_REPOS : INDY_API+NPM_REPOS)
-//      .send(res -> {
+      .basicAuthentication(indyUser, indyPass)
       .rxSend()
       .subscribe(res -> {
-//        if (res.failed()) {
-//          handler.handle(Future.failedFuture(res.cause()));
-//        } else {
           if (res.statusCode() == 200) {
             if(!res.getHeader("content-type").equalsIgnoreCase("application/json")) {
               handler.handle(Future.failedFuture(res.bodyAsString()));
@@ -67,20 +72,17 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
           } else {
             handler.handle(Future.failedFuture(res.bodyAsString()));
           }
-//        }
       });
   }
   
   @Override
   public void getListingsFromBrowsedStore(String name, Handler<AsyncResult<JsonObject>> handler) {
     client
-      .get(80, "indy-admin-stage.psi.redhat.com", INDY_API+BROWSED_STORES+name)
-//      .send(res -> {
+      .get(indyPort, indyHost, INDY_API+BROWSED_STORES+name)
+      .basicAuthentication(indyUser, indyPass)
+      .timeout(60000)
       .rxSend()
       .subscribe(res -> {
-//        if (res.failed()) {
-//          handler.handle(Future.failedFuture(res.cause()));
-//        } else {
           if (res.statusCode() == 200) {
             if(!res.getHeader("content-type").equalsIgnoreCase("application/json")) {
               handler.handle(Future.failedFuture(res.bodyAsString()));
@@ -88,18 +90,28 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
               handler.handle(Future.succeededFuture(res.bodyAsJsonObject()));
             }
           } else {
-            handler.handle(Future.failedFuture(res.bodyAsString()));
+            JsonObject jsonObject = new JsonObject();
+            jsonObject
+              .put("http.statusCode", res.statusCode())
+              .put("http.statusMsg", res.statusMessage())
+              .put("http.response.time", Instant.now())
+              .put("http.response.body", res.bodyAsString());
+            handler.handle(Future.succeededFuture(jsonObject));
           }
 //        }
+      },t -> {
+        handler.handle(Future.failedFuture(t.getMessage()));
       });
   }
   
   @Override
   public void getContentAsync(JsonObject lu, Handler<AsyncResult<JsonObject>> handler) {
-  
-//    io.vertx.reactivex.ext.web.client.WebClient.create(vertx, new WebClientOptions().setKeepAlive(true))
+    
       client
       .getAbs(lu.getString("listingUrl"))
+      .followRedirects(true)
+      .timeout(60000)
+      .basicAuthentication(indyUser, indyPass)
       .rxSend()
       .subscribe(res -> {
         if (res.statusCode() == 200) {
@@ -107,9 +119,15 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
           if (browsedStore.getJsonArray("listingUrls") != null && !browsedStore.getJsonArray("listingUrls").isEmpty()) {
             handler.handle(Future.succeededFuture(browsedStore));
           }
-          // HANDLE IF BROWSED STORE IS EMPTY ...
         } else {
-          handler.handle(Future.failedFuture(res.bodyAsString()));
+          JsonObject jsonObject = new JsonObject();
+          jsonObject
+            .put("http.statusCode", res.statusCode())
+            .put("http.statusMsg", res.statusMessage())
+            .put("headers", res.headers())
+            .put("http.response.time", Instant.now())
+            .put("http.response.body", res.bodyAsString());
+          handler.handle(Future.succeededFuture(jsonObject));
         }
       }, t -> {
         handler.handle(Future.failedFuture(t.getCause()));
@@ -118,8 +136,10 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   
   @Override
   public void getAndCompareHeadersAsync(JsonObject lu, Handler<AsyncResult<JsonObject>> handler) {
-    io.vertx.reactivex.ext.web.client.WebClient.create(vertx, new WebClientOptions().setKeepAlive(true))
-      .getAbs(lu.getString("listingUrl"))
+      client
+      .headAbs(lu.getString("listingUrl"))
+      .followRedirects(true)
+      .basicAuthentication(indyUser, indyPass)
       .rxSend()
       .subscribe(res -> {
         if (res.statusCode() == 200) {
@@ -130,11 +150,30 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
             Map.Entry<String, String> headerTuple = headers.next();
             headersJson.put(headerTuple.getKey(), headerTuple.getValue());
           }
-          jsonObject.put("headers", headersJson);
-          jsonObject.put("compare", true);
+          jsonObject
+            .put("headers", headersJson)
+            .put("compare", true)
+            .put("http.statusMsg", res.statusMessage())
+            .put("http.response.time", Instant.now())
+          ;
           handler.handle(Future.succeededFuture(jsonObject));
         } else {
-          handler.handle(Future.failedFuture(res.bodyAsString()));
+          
+          JsonObject jsonObject = new JsonObject().mergeIn(lu);
+          Iterator<Map.Entry<String, String>> headers = res.headers().iterator();
+          JsonObject headersJson = new JsonObject();
+          while (headers.hasNext()) {
+            Map.Entry<String, String> headerTuple = headers.next();
+            headersJson.put(headerTuple.getKey(), headerTuple.getValue());
+          }
+          jsonObject
+            .put("http.statusCode", res.statusCode())
+            .put("http.statusMsg", res.statusMessage())
+            .put("headers", headersJson)
+            .put("http.response.time", Instant.now())
+            .put("missing", true);
+          
+          handler.handle(Future.succeededFuture(jsonObject));
         }
       }, t -> {
         handler.handle(Future.failedFuture(t.getCause()));
@@ -145,6 +184,8 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   public void getContentSync(JsonObject lu, Handler<AsyncResult<JsonObject>> handler) {
     client
       .getAbs(lu.getString("listingUrl"))
+      .followRedirects(true)
+      .basicAuthentication(indyUser, indyPass)
       .send(res -> {
         if (res.failed()) {
           handler.handle(Future.failedFuture(res.cause()));
@@ -164,8 +205,9 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   @Override
   public void getAndCompareHeadersSync(JsonObject lu, Handler<AsyncResult<JsonObject>> handler) {
     client
-      .getAbs(lu.getString("listingUrl"))
+      .headAbs(lu.getString("listingUrl"))
       .followRedirects(true)
+      .basicAuthentication(indyUser, indyPass)
       .send(res -> {
         if (res.failed()) {
           handler.handle(Future.failedFuture(res.cause()));
@@ -192,82 +234,55 @@ public class IndyHttpClientServiceImpl implements IndyHttpClientService {
   public void getAndCompareSourceHeaders(JsonObject listingUrl, Handler<AsyncResult<JsonObject>> handler) {
     URL lu = null;
     String HTTPS = "https";
+    URL httpsListingUrl = null;
     try {
-      WebClient client1 = null;
       lu = new URL(listingUrl.getString("sources"));
-      URL httpsListingUrl = new URL(HTTPS, lu.getHost(), lu.getPort(), lu.getFile());
-      if(!listingUrl.getString("cert").isEmpty()) {
-        
-        System.out.println("Setting Cert for this https call: \n" + httpsListingUrl);
-        
-        JksOptions cert = new JksOptions().setValue(Buffer.buffer(listingUrl.getString("cert").getBytes()));
-        WebClientOptions options = new WebClientOptions().setSsl(true).setTrustStoreOptions(cert);
-        client1 = WebClient.create(vertx, options);
-      }
-      if(client1 != null) {
-        client1
-          .head(443, httpsListingUrl.getHost(), httpsListingUrl.getPath())
-          .ssl(true)
-          .send(res -> {
-            if (res.failed()) {
-              handler.handle(Future.failedFuture(res.cause()));
-            } else {
-              if (res.result().statusCode() == 200) {
-  
-                System.out.println("SUCCESS!");
-                
-                io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer> result = res.result();
-  
-                io.vertx.reactivex.core.MultiMap headers = result.headers();
-                
-                Map<String, Object> sourceHeaders = new HashMap<>();
-                Iterator<Map.Entry<String, String>> iterator = headers.iterator();
-                while (iterator.hasNext()) {
-                  sourceHeaders.put(iterator.next().getKey(), iterator.next().getValue());
-                }
-                handler.handle(Future.succeededFuture(new JsonObject(sourceHeaders)));
-              } else {
-                handler.handle(Future.failedFuture(res.result().bodyAsString()));
-              }
-            }
-          });
-      } else {
-        client
-        .headAbs(httpsListingUrl.toString())
-//          .head(443, httpsListingUrl.getHost(), httpsListingUrl.getPath())
-          .ssl(true)
-          .send(res -> {
-            if (res.failed()) {
-              handler.handle(Future.failedFuture(res.cause()));
-            } else {
-              if (res.result().statusCode() == 200) {
-                HttpResponse<io.vertx.reactivex.core.buffer.Buffer> result = res.result();
-  
-                MultiMap headers = result.headers();
-                
-                Map<String, Object> sourceHeaders = new HashMap<>();
-                Iterator<Map.Entry<String, String>> iterator = headers.iterator();
-                while (iterator.hasNext()) {
-                  sourceHeaders.put(iterator.next().getKey(), iterator.next().getValue());
-                }
-                handler.handle(Future.succeededFuture(new JsonObject(sourceHeaders)));
-              } else {
-                handler.handle(Future.failedFuture(res.result().bodyAsString()));
-              }
-            }
-          });
-      }
-  
-    } catch (MalformedURLException mue) {
-    
+      httpsListingUrl = new URL(HTTPS, lu.getHost(), lu.getPort(), lu.getFile());
     } catch (Exception e) {
-    
+      handler.handle(Future.failedFuture(e.getMessage()));
     }
+    client
+      .headAbs(httpsListingUrl.toString())
+      .ssl(true)
+      .rxSend()
+      .subscribe(res -> {
+        if(res.statusCode() == 200) {
+          JsonObject jsonObject = new JsonObject().mergeIn(listingUrl);
+          
+          MultiMap sourceHeaders = res.headers();
+          HashMap<String, Object> headers = new HashMap<>();
+          Iterator<Map.Entry<String, String>> iterator = sourceHeaders.iterator();
+          while (iterator.hasNext()) {
+            Map.Entry<String, String> next = iterator.next();
+            headers.put(next.getKey(),next.getValue());
+          }
+          jsonObject.put("headers", headers);
+          jsonObject.put("http.response.time", Instant.now());
+          handler.handle(Future.succeededFuture(jsonObject));
+        } else {
+          JsonObject jsonObject = new JsonObject().mergeIn(listingUrl);
+  
+          MultiMap sourceHeaders = res.headers();
+          HashMap<String, Object> headers = new HashMap<>();
+          Iterator<Map.Entry<String, String>> iterator = sourceHeaders.iterator();
+          while (iterator.hasNext()) {
+            Map.Entry<String, String> next = iterator.next();
+            headers.put(next.getKey(),next.getValue());
+          }
+          
+          jsonObject
+            .put("http.statusCode", res.statusCode())
+            .put("http.statusMsg", res.statusMessage())
+            .put("headers", headers)
+            .put("http.response.time", Instant.now())
+            .put("http.response.body", res.bodyAsString());
+  
+          handler.handle(Future.succeededFuture(jsonObject));
+        }
+      }, t -> {
+        handler.handle(Future.failedFuture(t.getCause()));
+      });
+    
   }
   
-  
-  private ConfigRetrieverOptions getConfigurationOptions() {
-    JsonObject path = new JsonObject().put("path", "config/config.json");
-    return new ConfigRetrieverOptions().addStore(new ConfigStoreOptions().setType("file").setConfig(path));
-  }
 }

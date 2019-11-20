@@ -35,6 +35,7 @@ public class BrowsedProcessing extends AbstractVerticle {
       })
     ;
     
+    
   }
   
   
@@ -55,12 +56,18 @@ public class BrowsedProcessing extends AbstractVerticle {
         } else {
           logger.info("\t\t\t========= < " + counter.incrementAndGet() + " : " + name + " > ===========");
           JsonObject result = ar.result();
-          if(result.getJsonArray("listingUrls") != null && !result.getJsonArray("listingUrls").isEmpty()) {
+          if(result.containsKey("storeKey") && result.getJsonArray("listingUrls") != null && !result.getJsonArray("listingUrls").isEmpty()) {
             result.put("cert", (cert == null || cert.isEmpty() ) ? cert : "" );
             vertx.eventBus().<JsonObject>publish("listings.urls", result);
+          } else if(result.containsKey("http.statusCode")) {
+            logger.info("Browsed Store HTTP Status Code: " + result.getString("http.statusCode"));
+            logger.info("Browsed Store Name: " + name);
           }
         }
       });
+      
+      // Replying to publisher ...
+      res.reply(new JsonObject().put("status", "ok"));
   }
   
 }

@@ -155,30 +155,37 @@ public class ContentProcessing extends AbstractVerticle {
     
     indyHttpClientService.getAndCompareSourceHeaders(urlListing, res -> {
       if(res.failed()) {
-        logger.info("Something wrong with source HTTPS request! " + res.cause() );// FAILED TO OPEN [ SSL ERROR ] (server_certificate_pem)
+        logger.info("Failed HTTPS request! " + res.cause() + " Source URL: \n" + urlListing.getString("sources") );// FAILED TO OPEN [ SSL ERROR ] (server_certificate_pem)
       } else {
         JsonObject httpSourceHeaders = res.result();
-  
-        boolean headerKeyMatch =
-          httpSourceHeaders.stream()
-            .anyMatch(entries -> anyHeaderKeyMatch(entries, urlListing));
         
-        if(headerKeyMatch) {
+        if(httpSourceHeaders.containsKey("http.statusCode")) {
+          logger.info("Bad Content HttpResponse: " + httpSourceHeaders.getString("http.statusCode"));
+          logger.info("Result: " + httpSourceHeaders.encodePrettily());
+          return;
+        }
+//        boolean headerKeyMatch =
+//          httpSourceHeaders.stream()
+//            .anyMatch(entry -> anyHeaderKeyMatch(entry, urlListing));
+//
+//        if(headerKeyMatch) {
           boolean headerValueMatch =
             httpSourceHeaders.stream()
               .anyMatch(entry -> anyHeaderValueMatch(entry, urlListing));
+        
           if(headerValueMatch) {
             urlListing.put("validated", true);
             vertx.eventBus().publish("remote.repository.valid.change", urlListing);
           } else {
             urlListing.put("validssl", false);
             vertx.eventBus().publish("remote.repository.not.valid.change", urlListing);
+            logger.info("HEADERS NOT MATCHING\nSource: " + urlListing.getString("sources") + " With: \n" + urlListing.getString("listingUrl"));
           }
-        } else {
+//        } else {
           // There is no source url header key which is matching to indy content url header key
-          logger.info("No Header Key is matching! " + urlListing.getString("sources"));
-        }
-        
+//          logger.info("No Header Key is matching! " + urlListing.getString("sources") + " With: \n" + urlListing.getString("listingUrl"));
+//        }
+      
       }
     });
     

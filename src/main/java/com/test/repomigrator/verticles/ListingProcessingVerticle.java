@@ -28,7 +28,7 @@ public class ListingProcessingVerticle extends AbstractVerticle {
       new CircuitBreakerOptions()
         .setMaxRetries(2)
         .setMaxFailures(2)
-        .setTimeout(6000)
+        .setTimeout(30000)
         .setFallbackOnFailure(true)
         .setResetTimeout(10000)
         .setNotificationPeriod(10000)
@@ -48,7 +48,8 @@ public class ListingProcessingVerticle extends AbstractVerticle {
         vertx.eventBus().publish("processing.errors",errorData);
       })
     ;
-  
+    
+    
   }
   
   
@@ -90,10 +91,11 @@ public class ListingProcessingVerticle extends AbstractVerticle {
             JsonObject result = ar.result();
             if(result != null && !result.containsKey("state")) {
               vertx.eventBus().publish("content.url.processing", result);
+            } else if (result.containsKey("missing")) {
+              vertx.eventBus().publish("content.url.processing.missing", result);
+            } else {
+              logger.info("Connection is Open : \n" + result.encodePrettily());
             }
-//              else {
-//              logger.info(result.encodePrettily()); // Circuit Breaker Open Circuit Messages...
-//            }
           }
           else {
             Throwable cause = ar.cause();
@@ -117,7 +119,8 @@ public class ListingProcessingVerticle extends AbstractVerticle {
         indyHttpClientService.getContentAsync(listingUrlsJson , ar -> {
 //          indyHttpClientService.getContentSync(listingUrlsJson , ar -> {
           if(ar.failed()) {
-            logger.info("Processing Browsed Store Path Failed! " + ar.cause());
+            logger.info("RESULT: " + ar.result().encodePrettily());
+            logger.info("Processing Listings Url Failed! " + ar.cause());
             future.fail(ar.cause());
           } else {
             future.complete(ar.result());
@@ -137,7 +140,11 @@ public class ListingProcessingVerticle extends AbstractVerticle {
       circuitBreaker.executeWithFallback(processor,fallback).setHandler(ar -> {
         if(ar.succeeded()) {
           if(ar.result() != null && !ar.result().containsKey("state")) {
+//            logger.info(ar.result().encodePrettily());
             vertx.eventBus().publish("listings.urls", ar.result());
+          } else if(ar.result().containsKey("http.statusCode")) {
+            logger.info("Listing Url Status Code: " + ar.result().getString("http.statusCode"));
+            logger.info("Response: " + ar.result().encodePrettily());
           }
         }
         else {

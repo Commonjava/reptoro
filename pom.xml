@@ -154,6 +154,11 @@
       <version>3.8.3</version>
       <type>jar</type>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config-kubernetes-configmap</artifactId>
+      <version>3.8.3</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -246,6 +251,9 @@
         <groupId>io.fabric8</groupId>
         <artifactId>vertx-maven-plugin</artifactId>
         <version>1.0.13</version>
+        <configuration>
+          <config>src/main/conf/config.json</config>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>io.fabric8</groupId>
@@ -253,6 +261,8 @@
         <version>4.2.0</version>
         <configuration>
           <generateRoute>true</generateRoute>
+          <enableImageChangeTrigger>true</enableImageChangeTrigger>
+<!--          <resourceDir>./src/main/resources</resourceDir>-->
         </configuration>
       </plugin>
     </plugins>

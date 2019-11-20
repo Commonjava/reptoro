@@ -8,16 +8,20 @@ window.addEventListener('load' , function(evt) {
     eb.registerHandler('listings.urls', function (error, message) {
       console.log("LU: " ,message);
     });
-
     eb.registerHandler("open.circuit.browsed.stores", function(error,message) {
       console.log("OCBS: " , message);
     });
-
-    eb.registerHandler("vertx.circuit-breaker", function(error,message) {
-      console.log("CB: " , message);
-    });
+//    eb.registerHandler("vertx.circuit-breaker", function(error,message) {
+//      console.log("CB: " , message);
+//    });
     eb.registerHandler("error.processing",function(error,message) {
       console.log("ERR: " , message);
-    })
+    });
+    eb.registerHandler("remote.repository.valid.change",function(error,message) {
+      console.log("RRVC: " , message);
+    });
+    eb.registerHandler("remote.repository.not.valid.change",function(error,message) {
+      console.log("RRNVC: " , message);
+    });
   }
 });

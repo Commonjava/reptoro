@@ -82,7 +82,28 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
     
     // Change http protocol on start and then process the content
     // and then after all the content files are done then change http protocol of remote repo
+  
+  
+    Flowable<Long> interval =
+      Flowable.interval(20, TimeUnit.SECONDS);
+  
+    Flowable<JsonObject> zipFlow = Flowable.zip(repoFlow, interval, (obs, timer) -> obs);
     
+    zipFlow.subscribe(ar -> {
+         vertx.eventBus().<JsonObject>request("browsed.stores", ar , handler -> {
+           if(handler.failed()) {
+             System.out.println("FAIL! cause: " + handler.cause());
+           } else {
+             System.out.println("Msg from Consumer: " + handler.result().body());
+           }
+         });
+      })
+    ;
+    
+    
+    
+    
+    /**
     Flowable<Long> interval =
       Flowable.interval(20, TimeUnit.SECONDS);
     
@@ -105,5 +126,6 @@ public class RemoteRepositoryProcessing extends AbstractVerticle {
         }
       });
     });
+     */
   }
 }
