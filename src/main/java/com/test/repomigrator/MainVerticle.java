@@ -3,30 +3,25 @@ package com.test.repomigrator;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Slf4jReporter;
+import com.test.repomigrator.verticles.IndyHttpClientVerticle;
 import io.vertx.circuitbreaker.HystrixMetricHandler;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.*;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.oauth2.OAuth2Auth;
-import io.vertx.ext.auth.oauth2.OAuth2ClientOptions;
-import io.vertx.ext.auth.oauth2.OAuth2FlowType;
-import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.handler.UserSessionHandler;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -35,10 +30,22 @@ public class MainVerticle extends AbstractVerticle {
 	Logger logger = Logger.getLogger(this.getClass().getName());
 
 //  private OAuth2Auth oauth2;
+ 
+ 
 	@Override
-	public void start() throws Exception { // Promise<Void> startPromise
-//    logger.log(Level.INFO,"[[START]] {0}" , this.getClass().getName());
-
+	public void start() throws Exception {
+    
+    vertx.exceptionHandler(t -> {
+      vertx.eventBus().publish("error.processing",
+        new JsonObject()
+          .put("time", Instant.now())
+          .put("msg", t.getMessage())
+          .put("cause", t.getCause())
+          .put("stacktrace", t.getStackTrace())
+          .put("suppresed", t.getSuppressed())
+      );
+    });
+    
 		System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
 
 		configureLogging();
@@ -62,23 +69,36 @@ public class MainVerticle extends AbstractVerticle {
 		  .setMetricRegistry(registry);
 		VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
 		// Vertx vertx = Vertx.vertx(vertxOptions);
-
-		ConfigRetrieverOptions configurationOptions = getConfigurationOptions();
-		ConfigRetriever configRetriever = ConfigRetriever.create(vertx, configurationOptions);
+    
+    ConfigRetriever configRetriever = ConfigRetriever.create(vertx);
+    
 
 		// create OAuth 2 instance for Keycloak
 //	oauth2 = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, configRetriever.getCachedConfig() );
-		configRetriever.getConfig(conf -> {
-			vertx.deployVerticle(new RemoteRepositoryProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new BrowsedProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new ListingUrlProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new ContentProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new ErrorProcessing());
-			vertx.deployVerticle(new RepoValidationProcessing(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-			vertx.deployVerticle(new DBProcessingVerticle(), new DeploymentOptions().setConfig(configRetriever.getCachedConfig()));
-		});
 
-		// TODO: 11/6/19   Routing for HTTP SSE and REST handling ...
+
+		configRetriever.getConfig(config -> {
+		  // deploy services first...
+      if(config.succeeded()) {
+        vertx.deployVerticle(new IndyHttpClientVerticle(), new DeploymentOptions().setConfig(config.result()), ar -> {
+  
+          logger.info("IndyHttpClientVerticle Deployed, id: " + ar.result());
+  
+          vertx.deployVerticle("com.test.repomigrator.RemoteRepositoryProcessing");
+          vertx.deployVerticle("com.test.repomigrator.BrowsedProcessing");
+          vertx.deployVerticle("com.test.repomigrator.ListingUrlProcessing");
+          vertx.deployVerticle("com.test.repomigrator.verticles.ListingProcessingVerticle");
+          vertx.deployVerticle("com.test.repomigrator.ContentProcessing");
+          vertx.deployVerticle("com.test.repomigrator.RepoValidationProcessing");
+          vertx.deployVerticle("com.test.repomigrator.ErrorProcessing");
+          vertx.deployVerticle("com.test.repomigrator.DBProcessingVerticle");
+  
+  
+        });
+      }
+      
+    });
+
 		HttpServer server = vertx.createHttpServer();
 		Router router = Router.router(vertx);
 
@@ -102,6 +122,8 @@ public class MainVerticle extends AbstractVerticle {
 			  .addOutboundPermitted(new PermittedOptions().setAddress("error.processing"))
 			  .addInboundPermitted(new PermittedOptions().setAddress("error.processing"))
 			  .addOutboundPermitted(new PermittedOptions().setAddress("vertx.circuit-breaker"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("remote.repository.valid.change"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("remote.repository.not.valid.change"))
 		  //          .addOutboundPermitted(new PermittedOptions().setAddress("open.circuit.browsed.stores"))
 		  //          .addInboundPermitted(new PermittedOptions().setAddress("open.circuit.browsed.stores"))
 		  );
@@ -111,11 +133,6 @@ public class MainVerticle extends AbstractVerticle {
 		router.get("/hystrix-metrics").handler(HystrixMetricHandler.create(vertx));
 
 		server.requestHandler(router).listen(8080);
-	}
-
-	private ConfigRetrieverOptions getConfigurationOptions() {
-		JsonObject path = new JsonObject().put("path", "config/config.json");
-		return new ConfigRetrieverOptions().addStore(new ConfigStoreOptions().setType("file").setConfig(path));
 	}
 
 	private static void configureLogging() {

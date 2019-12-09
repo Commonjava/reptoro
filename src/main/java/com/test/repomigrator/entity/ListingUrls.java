@@ -4,6 +4,7 @@ package com.test.repomigrator.entity;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
 
 import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
@@ -14,20 +15,18 @@ import java.util.List;
  * @author gorgigeorgievski
  */
 
-@DataObject
-@JsonAutoDetect
-@JsonIgnoreProperties(ignoreUnknown = true)
+@DataObject(generateConverter = true)
 public class ListingUrls implements Serializable{
   
-  @JsonbProperty("path")
     String path;
-  @JsonbProperty("listingUrl")
     String listingUrl;
   
     List<String> sources;
-  
-  @JsonbProperty("contentUrl")
     String contentUrl;
+
+    public ListingUrls(JsonObject json) {
+        
+    }
     
     public String getContentUrl() {
         return contentUrl;

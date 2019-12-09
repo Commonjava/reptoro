@@ -1,0 +1,89 @@
+= Cheatsheets
+
+[[BrowsedStore]]
+== BrowsedStore
+
+++++
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[baseBrowseUrl]]`@baseBrowseUrl`|`String`|-
+|[[baseContentUrl]]`@baseContentUrl`|`String`|-
+|[[listingUrls]]`@listingUrls`|`Array of link:dataobjects.html#ListingUrls[ListingUrls]`|-
+|[[parentPath]]`@parentPath`|`String`|-
+|[[parentUrl]]`@parentUrl`|`String`|-
+|[[path]]`@path`|`String`|-
+|[[sources]]`@sources`|`Array of String`|-
+|[[storeBrowseUrl]]`@storeBrowseUrl`|`String`|-
+|[[storeContentUrl]]`@storeContentUrl`|`String`|-
+|[[storeKey]]`@storeKey`|`String`|-
+|===
+
+[[ListingUrls]]
+== ListingUrls
+
+++++
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[contentUrl]]`@contentUrl`|`String`|-
+|[[listingUrl]]`@listingUrl`|`String`|-
+|[[path]]`@path`|`String`|-
+|[[sources]]`@sources`|`Array of String`|-
+|===
+
+[[Metadata]]
+== Metadata
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[changelog]]`@changelog`|`String`|-
+|===
+
+[[RemoteRepository]]
+== RemoteRepository
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[allowReleases]]`@allowReleases`|`Boolean`|-
+|[[allowSnapshots]]`@allowSnapshots`|`Boolean`|-
+|[[authoritativeIndex]]`@authoritativeIndex`|`Boolean`|-
+|[[cacheTimeoutSeconds]]`@cacheTimeoutSeconds`|`Number (Integer)`|-
+|[[disableTimout]]`@disableTimout`|`String`|-
+|[[disabled]]`@disabled`|`Boolean`|-
+|[[host]]`@host`|`String`|-
+|[[ignoreHostnameVerification]]`@ignoreHostnameVerification`|`Boolean`|-
+|[[isPassthrough]]`@isPassthrough`|`Boolean`|-
+|[[key]]`@key`|`String`|-
+|[[maxConnections]]`@maxConnections`|`Number (Integer)`|-
+|[[metadata]]`@metadata`|`link:dataobjects.html#Metadata[Metadata]`|-
+|[[metadataTimeoutSeconds]]`@metadataTimeoutSeconds`|`Number (Integer)`|-
+|[[name]]`@name`|`String`|-
+|[[nfcTimeoutSeconds]]`@nfcTimeoutSeconds`|`Number (Integer)`|-
+|[[packageType]]`@packageType`|`String`|-
+|[[pathStyle]]`@pathStyle`|`String`|-
+|[[port]]`@port`|`Number (Integer)`|-
+|[[prefetchListingType]]`@prefetchListingType`|`String`|-
+|[[prefetchPriority]]`@prefetchPriority`|`Number (Integer)`|-
+|[[prefetchRescan]]`@prefetchRescan`|`Boolean`|-
+|[[proxyPort]]`@proxyPort`|`Number (Integer)`|-
+|[[serverCertificatePem]]`@serverCertificatePem`|`String`|-
+|[[timeoutSeconds]]`@timeoutSeconds`|`Number (Integer)`|-
+|[[type]]`@type`|`String`|-
+|[[url]]`@url`|`String`|-
+|===
+

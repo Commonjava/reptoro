@@ -4,69 +4,51 @@ package com.test.repomigrator.entity;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
 
 import java.io.Serializable;
 import javax.json.bind.annotation.JsonbProperty;
 
 
-@DataObject
-@JsonAutoDetect
+@DataObject(generateConverter = true)
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class RemoteRepository implements Serializable {
   
-  @JsonbProperty("type")
+
   public String type;
-  @JsonbProperty("key")
   public String key;
-  @JsonbProperty("metadata")
   public Metadata metadata;
-  @JsonbProperty("disabled")
   public Boolean disabled;
-  @JsonbProperty("host")
   public String host;
-  @JsonbProperty("port")
   public Integer port;
-  @JsonbProperty("packageType")
   public String packageType;
-  @JsonbProperty("name")
   public String name;
-  @JsonbProperty("disable_timeout")
   public String disableTimout;
-  @JsonbProperty("path_style")
   public String pathStyle;
-  @JsonbProperty("authoritative_index")
   public Boolean authoritativeIndex;
-  @JsonbProperty("allow_snapshots")
   public Boolean allowSnapshots;
-  @JsonbProperty("allow_releases")
   public Boolean allowReleases;
   public String url;
-  @JsonbProperty("timeout_seconds")
   public Integer timeoutSeconds;
-  @JsonbProperty("max_connections")
   public Integer maxConnections;
-  @JsonbProperty("ignore_hostname_verification")
   public Boolean ignoreHostnameVerification;
-  @JsonbProperty("nfc_timeout_seconds")
   public Integer nfcTimeoutSeconds;
-  @JsonbProperty("is_passthrough")
   public Boolean isPassthrough;
-  @JsonbProperty("cache_timeout_seconds")
   public Integer cacheTimeoutSeconds;
-  @JsonbProperty("metadata_timeout_seconds")
   public Integer metadataTimeoutSeconds;
-  @JsonbProperty("server_certificate_pem")
   public String serverCertificatePem;
-  @JsonbProperty("proxy_port")
   public Integer proxyPort;
-  @JsonbProperty("prefetch_priority")
   public Integer prefetchPriority;
-  @JsonbProperty("prefetch_rescan")
   public Boolean prefetchRescan;
-  @JsonbProperty("prefetch_listing_type")
   public String prefetchListingType;
   
-  
+  public RemoteRepository(JsonObject json) {
+
+  }
+
+  public JsonObject toJson() {
+    return new JsonObject();
+  }
   
   public String getDisableTimout() {
     return disableTimout;
@@ -203,10 +185,6 @@ public class RemoteRepository implements Serializable {
   public void setPrefetchListingType(String prefetchListingType) {
     this.prefetchListingType = prefetchListingType;
   }
-  
-  
-  
-  
   
   public Metadata getMetadata() {
     return metadata;

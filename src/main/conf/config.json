@@ -1,0 +1,7 @@
+{
+  "indy.host": "indy-admin-stage.psi.redhat.com",
+  "indy.port": 80,
+  "indy.api": "/api",
+  "indy.user": "",
+  "indy.pass": ""
+}

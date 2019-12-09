@@ -71,11 +71,6 @@
       <version>${junit-jupiter.version}</version>
       <scope>test</scope>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>io.quarkus</groupId>-->
-<!--      <artifactId>quarkus-resteasy-jsonb</artifactId>-->
-<!--      <version>0.27.0</version>-->
-<!--    </dependency>-->
 
     <dependency>
       <groupId>com.fasterxml.jackson.jaxrs</groupId>
@@ -91,18 +86,15 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-service-proxy</artifactId>
-      <version>3.8.3</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-codegen</artifactId>
-      <version>3.8.3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>
-      <version>3.8.3</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -111,12 +103,11 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>9.4.1212</version>
+      <version>42.2.8</version> <!-- 9.4.1212 -->
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-service-discovery</artifactId>
-      <version>3.8.3</version>
     </dependency>
 
     <!-- Logging dependencies -->
@@ -145,26 +136,28 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-dropwizard-metrics</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-health-check</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-circuit-breaker</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
-    
+
     <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-auth-oauth2</artifactId>
         <optional>true</optional>
       <version>3.8.3</version>
       <type>jar</type>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config-kubernetes-configmap</artifactId>
+      <version>3.8.3</version>
     </dependency>
   </dependencies>
 
@@ -173,6 +166,39 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <generatedSourcesDirectory>src/main/generated</generatedSourcesDirectory>
+          <generatedTestSourcesDirectory>src/test/generated</generatedTestSourcesDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <configuration>
+              <annotationProcessors>
+                <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+              </annotationProcessors>
+              <generatedSourcesDirectory>src/main/generated</generatedSourcesDirectory>
+              <compilerArgs>
+                <arg>-Acodegen.output=${project.basedir}/src/main</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-testCompile</id>
+            <configuration>
+              <annotationProcessors>
+                <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+              </annotationProcessors>
+              <generatedTestSourcesDirectory>src/test/generated</generatedTestSourcesDirectory>
+              <compilerArgs>
+                <arg>-Acodegen.output=${project.basedir}/src/test</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -225,6 +251,9 @@
         <groupId>io.fabric8</groupId>
         <artifactId>vertx-maven-plugin</artifactId>
         <version>1.0.13</version>
+        <configuration>
+          <config>src/main/conf/config.json</config>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>io.fabric8</groupId>
@@ -232,6 +261,8 @@
         <version>4.2.0</version>
         <configuration>
           <generateRoute>true</generateRoute>
+          <enableImageChangeTrigger>true</enableImageChangeTrigger>
+<!--          <resourceDir>./src/main/resources</resourceDir>-->
         </configuration>
       </plugin>
     </plugins>
