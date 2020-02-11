@@ -4,7 +4,7 @@
     "indy.api": "/api",
     "indy.user": "",
     "indy.pass": "",
-    "indy.db.cassandra.hostname": "cassandra-cluster.nos-automation.svc",
+    "indy.db.cassandra.hostname": "cassandra-cluster.newcastle-devel.svc",
     "indy.db.cassandra.name": "indystorage",
     "indy.db.cassandra.keyspace": "pathmap",
     "indy.db.cassandra.port": 9042,
@@ -13,5 +13,6 @@
     "indy.db.psql.host": "",
     "indy.db.psql.port": "",
     "indy.db.psql.user": "",
-    "indy.db.psql.pass": ""
+    "indy.db.psql.pass": "",
+    "indy.except.remote.repositories": ["maven:remote:fusesource-proxy","maven:remote:test_remote"]
 }

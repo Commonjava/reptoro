@@ -13,5 +13,6 @@
     "indy.db.psql.host": "",
     "indy.db.psql.port": "",
     "indy.db.psql.user": "",
-    "indy.db.psql.pass": ""
+    "indy.db.psql.pass": "",
+    "indy.except.remote.repositories": ["maven:remote:fusesource-proxy","maven:remote:test_remote"]
 }
