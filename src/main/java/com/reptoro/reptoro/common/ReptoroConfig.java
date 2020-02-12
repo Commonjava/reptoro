@@ -24,7 +24,10 @@ public class ReptoroConfig {
 		  .setType("file")
 		  .setConfig(new JsonObject().put("path", "conf/config.json"));
 
-		return new ConfigRetrieverOptions().addStore(defaultFileConfigStore);
+    ConfigStoreOptions confOpts = new ConfigStoreOptions().setType("configmap")
+      .setConfig(new JsonObject().put("name", "reptoro-config").put("optional", true));
+
+		return new ConfigRetrieverOptions().addStore(defaultFileConfigStore).addStore(confOpts).setScanPeriod(5000);
 	}
 
 	public static void configureLogging() {

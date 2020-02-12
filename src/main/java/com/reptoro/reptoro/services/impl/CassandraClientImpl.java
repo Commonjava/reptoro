@@ -70,4 +70,9 @@ public class CassandraClientImpl implements CassandraClient {
 
   }
 
+  @Override
+  public void insertRemoteRepositoryData(JsonObject repo, Handler<AsyncResult<JsonObject>> handler) {
+    // Store this repository in cassandra db.
+  }
+
 }

@@ -27,10 +27,12 @@ import io.vertx.core.json.JsonObject;
 
 @ProxyGen
 public interface CassandraClient {
-    
+
 
     void getContentForRepository(String name , Handler<AsyncResult<JsonArray>> handler);
-    
+
+    void insertRemoteRepositoryData(JsonObject repo , Handler<AsyncResult<JsonObject>> handler);
+
     static CassandraClient createProxy(Vertx vertx, String address) {
         return new CassandraClientVertxEBProxy(vertx, address);
     }

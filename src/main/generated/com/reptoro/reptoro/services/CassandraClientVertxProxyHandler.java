@@ -44,6 +44,7 @@ import io.vertx.serviceproxy.HelperUtils;
 import io.vertx.core.json.JsonArray;
 import com.reptoro.reptoro.services.CassandraClient;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 /*
@@ -118,6 +119,11 @@ public class CassandraClientVertxProxyHandler extends ProxyHandler {
       switch (action) {
         case "getContentForRepository": {
           service.getContentForRepository((java.lang.String)json.getValue("name"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
+        case "insertRemoteRepositoryData": {
+          service.insertRemoteRepositoryData((io.vertx.core.json.JsonObject)json.getValue("repo"),
                         HelperUtils.createHandler(msg));
           break;
         }

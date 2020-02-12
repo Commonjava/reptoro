@@ -1,7 +1,6 @@
 package com.reptoro.reptoro;
 
 import com.reptoro.reptoro.common.ChecksumCompare;
-import com.reptoro.reptoro.common.EventBusChannels;
 import com.reptoro.reptoro.common.ReptoroTopics;
 import com.reptoro.reptoro.common.ReptoroConfig;
 import com.reptoro.reptoro.verticles.*;
@@ -64,6 +63,7 @@ public class Main {
 //          }
 //        });
 
+        logger.info("=> Deploying Verticles...");
         DeploymentOptions proxyOptions = new DeploymentOptions().setWorker(true).setInstances(1).setConfig(config);
         vertx.deployVerticle(ProxyClientVerticle.class.getName(),proxyOptions, res -> {
 					if (res.succeeded()) {
@@ -73,10 +73,12 @@ public class Main {
 						vertxDeployVerticle(vertx,BrowsedStoreVerticle.class.getName(),"",1,true,config);
 						vertxDeployVerticle(vertx,ContentProcessingVerticle.class.getName(),"",4,true,config);
             vertxDeployVerticle(vertx, ChangeProtocolVerticle.class.getName(),"",1,true,config);
-            vertxDeployVerticle(vertx,ReptoroServeVerticle.class.getName(),"",0,false,config);
+            vertxDeployVerticle(vertx, ReptoroHttpVerticle.class.getName(),"",0,false,config);
 
 						eb.send(ReptoroTopics.REMOTE_REPO_START , new JsonObject().put("remote.repos.type" , "maven"));
-					}
+					} else {
+            logger.info("- Problem deploying verticles: " + res.cause());
+          }
 				});
 			} else {
 				logger.info("- Problem loadding main configuration...");

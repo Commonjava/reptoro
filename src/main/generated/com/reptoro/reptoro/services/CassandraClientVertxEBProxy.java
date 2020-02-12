@@ -36,6 +36,7 @@ import io.vertx.serviceproxy.ProxyUtils;
 import io.vertx.core.json.JsonArray;
 import com.reptoro.reptoro.services.CassandraClient;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 /*
@@ -75,6 +76,25 @@ public class CassandraClientVertxEBProxy implements CassandraClient {
     DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
     _deliveryOptions.addHeader("action", "getContentForRepository");
     _vertx.eventBus().<JsonArray>request(_address, _json, _deliveryOptions, res -> {
+      if (res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        handler.handle(Future.succeededFuture(res.result().body()));
+      }
+    });
+  }
+  @Override
+  public  void insertRemoteRepositoryData(JsonObject repo, Handler<AsyncResult<JsonObject>> handler){
+    if (closed) {
+      handler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
+      return;
+    }
+    JsonObject _json = new JsonObject();
+    _json.put("repo", repo);
+
+    DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
+    _deliveryOptions.addHeader("action", "insertRemoteRepositoryData");
+    _vertx.eventBus().<JsonObject>request(_address, _json, _deliveryOptions, res -> {
       if (res.failed()) {
         handler.handle(Future.failedFuture(res.cause()));
       } else {
