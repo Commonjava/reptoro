@@ -27,7 +27,7 @@
 
         <vertx.main.class>com.reptoro.reptoro.Main</vertx.main.class>
 
-        <datastax-driver.minor.version>3.5</datastax-driver.minor.version>
+        <datastax-driver.minor.version>4.2</datastax-driver.minor.version>
         <datastax-driver.version>${datastax-driver.minor.version}.0</datastax-driver.version>
     </properties>
 
@@ -177,6 +177,26 @@
 <!--            <artifactId>vertx-cassandra-client</artifactId>-->
 <!--            <version>${vertx.version}</version>-->
 <!--        </dependency>-->
+
+      <dependency>
+        <groupId>com.datastax.oss</groupId>
+        <artifactId>java-driver-core</artifactId>
+        <version>${datastax-driver.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.datastax.oss</groupId>
+        <artifactId>java-driver-query-builder</artifactId>
+        <version>${datastax-driver.version}</version>
+      </dependency>
+
+
     </dependencies>
 
     <build>

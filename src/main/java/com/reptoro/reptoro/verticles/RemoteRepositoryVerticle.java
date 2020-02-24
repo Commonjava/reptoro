@@ -1,161 +1,116 @@
 package com.reptoro.reptoro.verticles;
 
+import com.reptoro.reptoro.common.RemoteRepos;
+import com.reptoro.reptoro.common.ReptoroTopics;
 import com.reptoro.reptoro.services.HttpClientService;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import java.time.Instant;
-import java.util.ArrayList;
+import io.vertx.core.shareddata.AsyncMap;
+import io.vertx.core.shareddata.SharedData;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.reptoro.reptoro.verticles.BrowsedStoreVerticle.INDY_HTTP_CLIENT_PROXY_SERVICE;
+
+/**
+ *
+ * @author gorgigeorgievski
+ */
 
 
-// Worker Verticle
+// Worker Verticle - Fetching all remote repositories from indy and then processing them:
+//        filtering,aggregating and transforming
 public class RemoteRepositoryVerticle extends AbstractVerticle {
 
-	Logger logger = Logger.getLogger(this.getClass().getName());
-
-	@Override
-	public void start(Promise<Void> startPromise) throws Exception {
-		vertx.eventBus().<JsonObject>consumer("remote.repo", this::handleRemoteRepositoryMsg);
-	}
+  Logger logger = Logger.getLogger(this.getClass().getName());
+  HttpClientService proxy;
 
 
-	void handleRemoteRepositoryMsg(Message<JsonObject> msg) {
-
-
-
-			  // Get ,Filter and Transform all Provided Remote Repositories
-			  processAllRemoteRepos(msg)
-				// Attach to Remote Repository Browsed store json object
-//				.thenApply(this::fetchBrowsedStores)
-//
-//
-//				.thenCompose(this::publishProcessedReposFuture)
-
-		  ;
-
-
-	}
-
-	void publishProcessedRepos(List<JsonObject> repos) {
-		vertx.eventBus().<JsonArray>publish("browsed.stores", new JsonArray(repos));
-	}
-
-	CompletableFuture<List<JsonObject>> publishProcessedReposFuture(CompletableFuture<List<JsonObject>> repos) {
-		return CompletableFuture.supplyAsync(new Supplier<List<JsonObject>>() {
-			@Override
-			public List<JsonObject> get() {
-				try {
-					vertx.eventBus().publish("browsed.stores", new JsonArray(repos.get()));
-					return null;
-				} catch (InterruptedException ex) {
-					Logger.getLogger(RemoteRepositoryVerticle.class.getName()).log(Level.SEVERE, null, ex);
-				} catch (ExecutionException ex) {
-					Logger.getLogger(RemoteRepositoryVerticle.class.getName()).log(Level.SEVERE, null, ex);
-				}
-				return null;
-			}
-
-		});
-	}
-
-	List<JsonObject> publishRepos(List<JsonObject> repos) {
-		vertx.eventBus().<JsonArray>publish("browsed.stores", new JsonArray(repos));
-		return repos;
-	}
-
-	static Boolean compareProtocol(JsonObject repo) {
-		String protocol = repo.getString("url").split("//")[0];
-		return !protocol.equalsIgnoreCase("https:");
-	}
-
-	static Boolean filterPromotedRepos(JsonObject repo) {
-		String name = repo.getString("name");
-		return !name.contains("Promote");
-	}
-
-  static Boolean filterKojiRepos(JsonObject repo) {
-    String name = repo.getString("name");
-    return !name.contains("koji-");
+  @Override
+  public void init(Vertx vertx, Context context) {
+    super.init(vertx, context);
+    proxy = HttpClientService.createProxy(vertx, INDY_HTTP_CLIENT_PROXY_SERVICE);
   }
 
-	static Boolean filterDisabledRepos(JsonObject repo) {
-		return !repo.getBoolean("disabled");
-	}
+  @Override
+  public void start() throws Exception {
 
-	static Boolean filterRemoteRepos(JsonObject repo) {
-		return repo.getString("type").equalsIgnoreCase("remote");
-	}
+    vertx.eventBus().<JsonObject>consumer(ReptoroTopics.REMOTE_REPO_START , this::handleProcessingRemoteRepos);
 
-	CompletableFuture<List<JsonObject>> processAllRemoteRepos(Message<JsonObject> repos) {
-		return CompletableFuture.supplyAsync(new Supplier<List<JsonObject>>() {
-			@Override
-			public List<JsonObject> get() {
-				return repos
-				  .body()
-				  .getJsonArray("items")
-				  .stream()
-				  .map(entry -> new JsonObject(entry.toString()))
-				  .filter(RemoteRepositoryVerticle::filterRemoteRepos)
-				  .filter(RemoteRepositoryVerticle::filterDisabledRepos)
-				  .filter(RemoteRepositoryVerticle::compareProtocol)
-				  .filter(RemoteRepositoryVerticle::filterPromotedRepos)
-          .filter(RemoteRepositoryVerticle::filterKojiRepos)
-				  .map(repo -> {
-					  repo.put("timestamp.rr", Instant.now());
-					  vertx.eventBus().publish("browsed.stores", repo);
-					  return repo;
-				  })
-				  .collect(Collectors.toList());
-			}
+    vertx.eventBus().<JsonObject>consumer(ReptoroTopics.REMOTE_REPO, this::handleRemoteRepositoryMsg);
 
-			private Stream<JsonObject> publishRepos(Stream<JsonObject> repo) {
-				// vertx.eventBus().publish("browsed.stores", new JsonObject(repo));
-				return repo;
-			}
-		});
-	}
+    vertx.eventBus().consumer(ReptoroTopics.REMOTE_REPOS_FILTERED , this::handleRemoteRepositoryFiltered);
 
-	CompletableFuture<List<JsonObject>> fetchBrowsedStores(List<JsonObject> remoteRepos) {
-		return CompletableFuture.supplyAsync(new Supplier<List<JsonObject>>() {
-			@Override
-			public List<JsonObject> get() {
-				HttpClientService proxy = HttpClientService.createProxy(vertx, "indy.http.client.service");
+  }
 
-				List<JsonObject> bsRemoteRepos = new ArrayList<>();
-				for (JsonObject jo : remoteRepos) {
-					proxy.getListingsFromBrowsedStore(jo.getString("key"), res -> {
-						if (res.succeeded()) {
-//							logger.info("-- Fetched --- " + jo.getString("key") );
-							jo.put("browsedStore", res.result());
-							bsRemoteRepos.add(jo);
-						} else {
-							logger.info("BAD RESULT: \n" + res.cause());
-						}
-					});
-				}
-				logger.info(bsRemoteRepos.size()+"");
-				return bsRemoteRepos;
-			}
-		});
-	}
+  void handleProcessingRemoteRepos(Message<JsonObject> msg) {
+    JsonObject body = msg.body();
+    String remoteRepositoriesType = body.getString("remote.repos.type");
 
-//	JsonObject getBrowsedStore(JsonObject repo,HttpClientService proxy) {
-//		JsonObject result = new JsonObject();
-//		proxy.getListingsFromBrowsedStore(repo.getString("key"), res -> {
-//			if(res.succeeded()) {
-//				result = res.result();
-//			}
-//		});
-//		return result;
-//	}
+    proxy.getAllRemoteRepositories(remoteRepositoriesType, hndlr -> {
+      if (hndlr.succeeded()) {
+        vertx.eventBus().send(ReptoroTopics.REMOTE_REPO, hndlr.result());
+      } else {
+        logger.info("[[FAILED]] " + hndlr.cause());
+      }
+    });
+  }
+
+  void handleRemoteRepositoryMsg(Message<JsonObject> msg) {
+    JsonObject remoteRepositoriesJson = msg.body();
+
+    new RemoteRepos(config())
+      .processAllRemoteRepos(remoteRepositoriesJson)
+      .thenApply(this::publishFilteredRepositories)
+      .thenApply((data) -> {
+        final SharedData sharedData = vertx.sharedData();
+        sharedData.getLocalAsyncMap("remote.repositories" , res -> {
+          if(res.succeeded()) {
+            AsyncMap<Object, Object> asyncMap = res.result();
+            try {
+              List<JsonObject> jsonObjects = data.get();
+              asyncMap.putIfAbsent("repos" , jsonObjects , ar -> {
+                if(ar.succeeded()) {
+                  logger.info("[[ASYNCMAP.REPOS.SIZE]] " + jsonObjects.size());
+                }
+              });
+            } catch (InterruptedException e) {
+              logger.info("[[EXCEPTION.INTERRUPTED]] " + e.getCause() );
+            } catch (ExecutionException e) {
+              logger.info("[[EXCEPTION.EXECUTION]] " + e.getCause() );
+            }
+
+
+          } else {
+            logger.info("[[ASYNCMAP.FAILED]] " + res.cause());
+          }
+        });
+        return null;
+      })
+    ;
+  }
+
+  void handleRemoteRepositoryFiltered(Message<JsonArray> msg) {
+    JsonArray filteredRepositories = msg.body();
+//    logger.info("Filtered Repositories: \n");
+//    logger.info(filteredRepositories.encodePrettily());
+  }
+
+  CompletableFuture<List<JsonObject>> publishFilteredRepositories(List<JsonObject> repos) {
+    return CompletableFuture.supplyAsync(new Supplier<List<JsonObject>>() {
+      @Override
+      public List<JsonObject> get() {
+        vertx.eventBus().publish(ReptoroTopics.BROWSED_STORES, new JsonArray( repos ));
+        return repos;
+      }
+    });
+  }
 }

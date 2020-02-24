@@ -9,15 +9,21 @@ import com.reptoro.reptoro.services.impl.CassandraClientImpl;
 import com.reptoro.reptoro.services.impl.HttpClientServiceImpl;
 
 import io.vertx.cassandra.CassandraClientOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.serviceproxy.ServiceBinder;
 
 public class ProxyClientVerticle extends AbstractVerticle {
+
+
   @Override
   public void start() throws Exception {
-    
+
+    JsonObject config = config();
+
+
     // Indy Endpoint Deployment of Proxy Client Service...
     WebClientOptions webOptions =
       new WebClientOptions()
@@ -26,49 +32,32 @@ public class ProxyClientVerticle extends AbstractVerticle {
         .setConnectTimeout(60000)
 //        .setSslEngineOptions(new OpenSSLEngineOptions().setSessionCacheEnabled(true))
       ;
-
     HttpClientService service =
-      new HttpClientServiceImpl(WebClient.create(vertx,webOptions),config());
-
+      new HttpClientServiceImpl(WebClient.create(vertx,webOptions),config);
     new ServiceBinder(vertx.getDelegate())
       .setAddress("indy.http.client.service")
       .register(HttpClientService.class, service);
-  
-  
+
+
+    // Cassandra Client Deployment of Proxy Service ...
     CassandraClientOptions options = new CassandraClientOptions();
-    options.setKeyspace("pathmap");
-    options.setPort(9042);
-  
-  
+    options.setKeyspace(config.getString("indy.db.cassandra.keyspace"));
+    options.setPort(config.getInteger("indy.db.cassandra.port"));
+
     Cluster.Builder builder = options.dataStaxClusterBuilder();
     if(builder.getContactPoints().isEmpty()) {
-      builder.addContactPoint("cassandra-cluster.newcastle-devel.svc");
+      builder.addContactPoint(config.getString("indy.db.cassandra.hostname"));
     }
-  
     builder
-      .withCredentials("cassandra", "cassandra")
-      .addContactPoint("cassandra-cluster.newcastle-devel.svc")
-      .withPort(9042)
-	  
-    ;
+      .withCredentials(config.getString("indy.db.cassandra.user"), config.getString("indy.db.cassandra.pass"))
+      .addContactPoint(config.getString("indy.db.cassandra.hostname"))
+      .withPort(config.getInteger("indy.db.cassandra.port"));
     Cluster cluster = builder.build();
-	
-    Session indystorage = cluster.connect("indystorage");
-	
-//	io.vertx.cassandra.CassandraClient cassClient = io.vertx.cassandra.CassandraClient.create(vertx.getDelegate(), options);
-//	
-//	
-//	
-//	  CassandraClient cassandraClient = new CassandraClientImpl(cassClient,config());
-//	  new ServiceBinder(vertx.getDelegate())
-//		.setAddress("indy.db.cassandra.client.service")
-//		.register(CassandraClient.class, cassandraClient);
-  
+    Session indystorage = cluster.connect(config.getString("indy.db.cassandra.name"));
     CassandraClient cassandraClient = new CassandraClientImpl(indystorage, config());
-  
     new ServiceBinder(vertx.getDelegate())
       .setAddress("indy.db.cassandra.client.service")
       .register(CassandraClient.class, cassandraClient);
-  
+
   }
 }

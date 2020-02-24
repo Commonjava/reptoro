@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.reptoro.reptoro.config;
+package com.reptoro.reptoro.common;
 
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -16,16 +16,21 @@ import org.slf4j.MDC;
  * @author gorgigeorgievski
  */
 public class ReptoroConfig {
-	
-	
+
+
 	public static ConfigRetrieverOptions getConfiguration() {
 
 		ConfigStoreOptions defaultFileConfigStore = new ConfigStoreOptions()
 		  .setType("file")
 		  .setConfig(new JsonObject().put("path", "conf/config.json"));
 
+//    ConfigStoreOptions confOpts = new ConfigStoreOptions().setType("configmap")
+//      .setConfig(new JsonObject().put("name", "reptoro-config").put("optional", true));
+
 		return new ConfigRetrieverOptions()
-		  .addStore(defaultFileConfigStore);
+      .addStore(defaultFileConfigStore)
+//      .addStore(confOpts)
+      .setScanPeriod(5000);
 	}
 
 	public static void configureLogging() {
@@ -39,5 +44,5 @@ public class ReptoroConfig {
 			// Silent error, we can live without it
 		}
 	}
-	
+
 }
