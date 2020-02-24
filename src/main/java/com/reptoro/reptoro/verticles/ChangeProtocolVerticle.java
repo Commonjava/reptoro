@@ -22,7 +22,8 @@ public class ChangeProtocolVerticle extends AbstractVerticle {
 
   void handleChangeProtocol(Message<JsonObject> msg) {
     JsonObject repo = msg.body();
-
+    if(!repo.getJsonObject("browsedStore").containsKey("content"))
+      logger.info("[[NO>CONTENT]] " + repo.getString("key"));
     // Get repository metadata object and check for exception messages from indy validation (http-404 , exceptions ... )
     // if there is indy-validation exception messages and this repository doesn't have content then disable it
   }

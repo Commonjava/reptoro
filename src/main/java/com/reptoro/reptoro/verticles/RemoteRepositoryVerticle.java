@@ -9,10 +9,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.SharedData;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -57,7 +59,7 @@ public class RemoteRepositoryVerticle extends AbstractVerticle {
       if (hndlr.succeeded()) {
         vertx.eventBus().send(ReptoroTopics.REMOTE_REPO, hndlr.result());
       } else {
-        logger.info("- Problem fetching Remote Repositories");
+        logger.info("[[FAILED]] " + hndlr.cause());
       }
     });
   }
@@ -67,10 +69,30 @@ public class RemoteRepositoryVerticle extends AbstractVerticle {
 
     new RemoteRepos(config())
       .processAllRemoteRepos(remoteRepositoriesJson)
-//      .thenApply(processedRepos -> remoteRepos.publishProcessedReposFuture(processedRepos))
       .thenApply(this::publishFilteredRepositories)
       .thenApply((data) -> {
         final SharedData sharedData = vertx.sharedData();
+        sharedData.getLocalAsyncMap("remote.repositories" , res -> {
+          if(res.succeeded()) {
+            AsyncMap<Object, Object> asyncMap = res.result();
+            try {
+              List<JsonObject> jsonObjects = data.get();
+              asyncMap.putIfAbsent("repos" , jsonObjects , ar -> {
+                if(ar.succeeded()) {
+                  logger.info("[[ASYNCMAP.REPOS.SIZE]] " + jsonObjects.size());
+                }
+              });
+            } catch (InterruptedException e) {
+              logger.info("[[EXCEPTION.INTERRUPTED]] " + e.getCause() );
+            } catch (ExecutionException e) {
+              logger.info("[[EXCEPTION.EXECUTION]] " + e.getCause() );
+            }
+
+
+          } else {
+            logger.info("[[ASYNCMAP.FAILED]] " + res.cause());
+          }
+        });
         return null;
       })
     ;

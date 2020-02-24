@@ -43,14 +43,15 @@ public class ProxyClientVerticle extends AbstractVerticle {
     CassandraClientOptions options = new CassandraClientOptions();
     options.setKeyspace(config.getString("indy.db.cassandra.keyspace"));
     options.setPort(config.getInteger("indy.db.cassandra.port"));
+
     Cluster.Builder builder = options.dataStaxClusterBuilder();
     if(builder.getContactPoints().isEmpty()) {
-      builder.addContactPoint("cassandra-cluster.newcastle-devel.svc");
+      builder.addContactPoint(config.getString("indy.db.cassandra.hostname"));
     }
     builder
       .withCredentials(config.getString("indy.db.cassandra.user"), config.getString("indy.db.cassandra.pass"))
       .addContactPoint(config.getString("indy.db.cassandra.hostname"))
-      .withPort(9042);
+      .withPort(config.getInteger("indy.db.cassandra.port"));
     Cluster cluster = builder.build();
     Session indystorage = cluster.connect(config.getString("indy.db.cassandra.name"));
     CassandraClient cassandraClient = new CassandraClientImpl(indystorage, config());

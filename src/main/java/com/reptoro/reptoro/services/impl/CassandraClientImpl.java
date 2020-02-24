@@ -65,7 +65,7 @@ public class CassandraClientImpl implements CassandraClient {
 //			}
     }
     if (dataArr.size() > 0)
-      logger.info("REPO: " + name + " ||| CONTENT SIZE: " + dataArr.size());
+      logger.info("[[REPOSITORY]] " + name + " [[FILES.SIZE]] " + dataArr.size());
     handler.handle(Future.succeededFuture(dataArr));
 
   }

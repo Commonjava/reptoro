@@ -1,5 +1,5 @@
 {
-    "indy.host": "indy-master.newcastle-devel.svc",
+    "indy.host": "indy-stable-next.newcastle-devel.svc",
     "indy.port": 80,
     "indy.api": "/api",
     "indy.user": "",
@@ -14,5 +14,7 @@
     "indy.db.psql.port": "",
     "indy.db.psql.user": "",
     "indy.db.psql.pass": "",
-    "indy.except.remote.repositories": ["maven:remote:fusesource-proxy","maven:remote:test_remote"]
+    "indy.db.cassandra.write.keyspace": "reptoro_repos",
+    "indy.except.remote.repositories": ["maven:remote:fusesource-proxy","maven:remote:test_remote"],
+    "indy.except.filename.extensions" : ["maven-metadata.xml", ".sha1", ".md5", ".asc"]
 }

@@ -60,7 +60,7 @@ public class RemoteRepos {
     for(String repoKey : exceptedRepos) {
 //      logger.info("=>\t\t\t Checking repository: " + key + " with excluded repo: " + repoKey);
       if(repoKey.equalsIgnoreCase(key)) {
-        logger.info("=> Exclude Repository: " + key);
+        logger.info("[[FILTER.EXCLUDE]] " + key);
         return false;
       }
     }
@@ -69,7 +69,7 @@ public class RemoteRepos {
 
   public JsonObject publishRepos(JsonObject repo) {
     repo.put("timestamp.rr", Instant.now());
-    logger.info("=> Publishing: " + repo.getString("name"));
+    logger.info("[[PUBLISHING]] " + repo.getString("name"));
     vertx.eventBus().publish("browsed.store", repo);
     return repo;
   }

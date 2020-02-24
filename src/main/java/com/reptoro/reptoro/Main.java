@@ -31,7 +31,7 @@ public class Main {
         JsonObject config = ar.result();
 
         JsonArray exceptRepos = config.getJsonArray(EXCLUDED_REMOTE_REPOSITORIES);
-        logger.info("Excepted Repos: " + exceptRepos.encodePrettily());
+        logger.info("[[ EXCLUDED ]] " + exceptRepos.encodePrettily());
 
         // ---
 //        vertx.deployVerticle(BrowsedStoreVerticle.class.getName(), res -> {
@@ -63,11 +63,11 @@ public class Main {
 //          }
 //        });
 
-        logger.info("=> Deploying Verticles...");
+        logger.info("[[DEPLOYING.VERTICLES..]]");
         DeploymentOptions proxyOptions = new DeploymentOptions().setWorker(true).setInstances(1).setConfig(config);
         vertx.deployVerticle(ProxyClientVerticle.class.getName(),proxyOptions, res -> {
 					if (res.succeeded()) {
-						logger.info("-\t\t\t\t " + ProxyClientVerticle.class.getName() + " Deployed!!!");
+						logger.info("[[DEPLOYED]] " + ProxyClientVerticle.class.getName());
 
 						vertxDeployVerticle(vertx,RemoteRepositoryVerticle.class.getName(),"",1,true,config);
 						vertxDeployVerticle(vertx,BrowsedStoreVerticle.class.getName(),"",1,true,config);
@@ -75,13 +75,18 @@ public class Main {
             vertxDeployVerticle(vertx, ChangeProtocolVerticle.class.getName(),"",1,true,config);
             vertxDeployVerticle(vertx, ReptoroHttpVerticle.class.getName(),"",0,false,config);
 
-						eb.send(ReptoroTopics.REMOTE_REPO_START , new JsonObject().put("remote.repos.type" , "maven"));
+
+            // send "start" command to remoteRepositoryVerticle...
+            vertx.setTimer(3000 , hndlr -> {
+              eb.send(ReptoroTopics.REMOTE_REPO_START , new JsonObject().put("remote.repos.type" , "maven"));
+            });
+
 					} else {
-            logger.info("- Problem deploying verticles: " + res.cause());
+            logger.info("[[DEPLOYING.PROBLEM]]" + res.cause());
           }
 				});
 			} else {
-				logger.info("- Problem loadding main configuration...");
+				logger.info("[[CONFIGURATION.PROBLEM]] " + ar.cause());
 			}
 		});
 
@@ -95,8 +100,8 @@ public class Main {
 
     ChecksumCompare.checksumCompareResultsFlowable
       .subscribe((nxt) -> {
-        logger.info("Result Map size: " + ChecksumCompare.checksumCompareResults.size() );
-        logger.info("Result Array size: " + ChecksumCompare.checksumCompareResults.get("maven:remote:central").size());
+        logger.info("[[RESULTS.MAP.SIZE]]" + ChecksumCompare.checksumCompareResults.size() );
+//        logger.info("Result Array size: " + ChecksumCompare.checksumCompareResults.get("maven:remote:central").size());
         logger.info("=============================================================================");
       });
 
@@ -106,11 +111,12 @@ public class Main {
 	  DeploymentOptions deploymentOptions = new DeploymentOptions().setConfig(config);
 	  if(instances!=0) { deploymentOptions.setInstances(instances); }
 	  if(worker) { deploymentOptions.setWorker(worker); }
+    logger.info("[[DEPLOYING]] \t\t\t\t[" + name +"]");
     vertx.deployVerticle(name,deploymentOptions,res -> {
       if(res.succeeded()) {
-        logger.info("=> Verticle [" + name + "] is deployed @ " + Instant.now());
+        logger.info("[[DEPLOYED]]  \t\t\t\t\t[" + name + "] @ " + Instant.now());
       } else {
-        logger.info("=> Verticle [" + name + "] failed to deploy @ " + Instant.now());
+        logger.info("[[DEPLOYED.FAILED]] !!! [" + name + "] @ " + Instant.now());
       }
     });
   }

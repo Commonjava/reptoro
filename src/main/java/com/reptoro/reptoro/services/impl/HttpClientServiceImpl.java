@@ -59,7 +59,7 @@ public class HttpClientServiceImpl implements HttpClientService {
 
   @Override
   public void getAllRemoteRepositories(String packageType, Handler<AsyncResult<JsonObject>> handler) {
-    logger.info("Indy Address: " + "http://" + indyHost + ":" + indyPort + ((packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? INDY_API+MAVEN_REPOS : INDY_API+NPM_REPOS) );
+    logger.info("[[INDY]] " + "http://" + indyHost + ":" + indyPort + ((packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? INDY_API+MAVEN_REPOS : INDY_API+NPM_REPOS) );
     client
       .get(indyPort, indyHost,
         (packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? INDY_API+MAVEN_REPOS : INDY_API+NPM_REPOS)
@@ -231,7 +231,7 @@ public class HttpClientServiceImpl implements HttpClientService {
     String repoName = repoKey.split(":")[repoKey.split(":").length - 1];
 
     String path = INDY_API + CONTENT_STORES + repoName + content.getString("parentpath") +"/" + content.getString("filename");
-    logger.info("Fetch Headers for local file: " + "http://" +  indyHost + ":" + indyPort + path);
+    logger.info("[[HEADERS.LOCAL]] " + "http://" +  indyHost + ":" + indyPort + path);
     client
       .head(indyPort,indyHost,path)
       .followRedirects(true)
@@ -276,7 +276,7 @@ public class HttpClientServiceImpl implements HttpClientService {
       e.printStackTrace();
     }
 
-    logger.info(httpsSourceUrl.toString());
+    logger.info("[[HEADERS.REMOTE]] " + httpsSourceUrl.toString());
 
     client
       .headAbs(httpsSourceUrl.toString())
