@@ -1,20 +1,61 @@
 {
-    "indy.host": "indy-stable-next.newcastle-devel.svc",
-    "indy.port": 80,
-    "indy.api": "/api",
-    "indy.user": "",
-    "indy.pass": "",
-    "indy.db.cassandra.hostname": "cassandra-cluster.newcastle-devel.svc",
-    "indy.db.cassandra.name": "indystorage",
-    "indy.db.cassandra.keyspace": "pathmap",
-    "indy.db.cassandra.port": 9042,
-    "indy.db.cassandra.user": "cassandra",
-    "indy.db.cassandra.pass": "cassandra",
-    "indy.db.psql.host": "",
-    "indy.db.psql.port": "",
-    "indy.db.psql.user": "",
-    "indy.db.psql.pass": "",
-    "indy.db.cassandra.write.keyspace": "reptoro_repos",
-    "indy.except.remote.repositories": ["maven:remote:fusesource-proxy","maven:remote:test_remote"],
-    "indy.except.filename.extensions" : ["maven-metadata.xml", ".sha1", ".md5", ".asc"]
+  "indy": {
+    "host": "indy.newcastle-stage.svc",
+    "port": 80,
+    "user": "",
+    "pass": "",
+    "api": "/api",
+    "mavenApi": "/admin/stores/maven/remote",
+    "npmApi": "/admin/stores/npm/remote",
+    "browsedStoreApi": "/browse/maven/remote/",
+    "contentStoreApi": "/content/maven/remote/"
+  },
+  "cassandra": {
+    "hostname": "cassandra-cluster.newcastle-stage.svc",
+    "keyspace": "indystorage",
+    "tablename": "pathmap",
+    "port": 9042,
+    "user": "cassandra",
+    "pass": "cassandra",
+    "reptoro": {
+      "keyspace": "reptoro",
+      "tablename": "repos"
+    }
+  },
+  "reptoro": {
+    "except.remote.repos": ["maven:remote:prod-shared-imports","maven:remote:i-brewroot-4","maven:remote:i-brewroot-9","maven:remote:fusesource-proxy","maven:remote:test_remote","maven:remote:i-jb-eap-7.1-brew-2","maven:remote:i-brew.jb.common"],
+    "except.filename.extensions": ["maven-metadata.xml", ".sha1", ".md5", ".asc",".listing.txt"],
+    "allowed.file.extensions": ["pom","zip","jar","tar","txt","war","ear"]
+  },
+  "mockdata": {
+    "type": "remote",
+    "key": "maven:remote:central",
+    "metadata": {
+      "changelog": "increase central request timeout",
+      "implied_stores": "{\n  \"items\" : [ \"maven:remote:oss-sonatype-releases\" ]\n}"
+    },
+    "disabled": false,
+    "host": "repo1.maven.org",
+    "port": 80,
+    "packageType": "maven",
+    "name": "central",
+    "disable_timeout": -1,
+    "path_style": "plain",
+    "authoritative_index": false,
+    "create_time": "2019-12-11 07:29:29 +0000",
+    "allow_snapshots": true,
+    "allow_releases": true,
+    "url": "http://repo1.maven.org/maven2/",
+    "timeout_seconds": 180,
+    "max_connections": 30,
+    "ignore_hostname_verification": false,
+    "nfc_timeout_seconds": 0,
+    "is_passthrough": false,
+    "cache_timeout_seconds": 0,
+    "metadata_timeout_seconds": 86400,
+    "proxy_port": 0,
+    "prefetch_priority": 0,
+    "prefetch_rescan": false,
+    "prefetch_listing_type": "html"
+  }
 }

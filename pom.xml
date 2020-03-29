@@ -4,9 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.reptoro</groupId>
+    <groupId>com.commonjava.reptoro</groupId>
     <artifactId>reptoro</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,9 +24,9 @@
         <junit-jupiter.version>5.4.0</junit-jupiter.version>
         <logback.contrib.version>0.1.5</logback.contrib.version>
 
-        <main.verticle>com.reptoro.reptoro.verticles.MainVerticle</main.verticle>
+        <main.verticle>com.commonjava.verticles.MainVerticle</main.verticle>
 
-        <vertx.main.class>com.reptoro.reptoro.Main</vertx.main.class>
+        <vertx.main.class>com.commonjava.reptoro.Main</vertx.main.class>
 
         <datastax-driver.minor.version>4.2</datastax-driver.minor.version>
         <datastax-driver.version>${datastax-driver.minor.version}.0</datastax-driver.version>
@@ -81,16 +82,16 @@
         </dependency>
 
         <!--    JSON-->
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
-<!--            <artifactId>jackson-jaxrs-json-provider</artifactId>-->
-<!--            <version>2.9.10</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>javax.json.bind</groupId>-->
-<!--            <artifactId>javax.json.bind-api</artifactId>-->
-<!--            <version>1.0</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
+        <!--            <artifactId>jackson-jaxrs-json-provider</artifactId>-->
+        <!--            <version>2.9.10</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>javax.json.bind</groupId>-->
+        <!--            <artifactId>javax.json.bind-api</artifactId>-->
+        <!--            <version>1.0</version>-->
+        <!--        </dependency>-->
 
 
         <dependency>
@@ -142,26 +143,26 @@
         </dependency>
 
         <!-- Logging dependencies -->
-<!--        <dependency>-->
-<!--            <groupId>ch.qos.logback.contrib</groupId>-->
-<!--            <artifactId>logback-jackson</artifactId>-->
-<!--            <version>${logback.contrib.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>ch.qos.logback.contrib</groupId>-->
-<!--            <artifactId>logback-json-classic</artifactId>-->
-<!--            <version>${logback.contrib.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.core</groupId>-->
-<!--            <artifactId>jackson-databind</artifactId>-->
-<!--            <version>2.9.8</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>ch.qos.logback</groupId>-->
-<!--            <artifactId>logback-classic</artifactId>-->
-<!--            <version>1.2.3</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>ch.qos.logback.contrib</groupId>-->
+        <!--            <artifactId>logback-jackson</artifactId>-->
+        <!--            <version>${logback.contrib.version}</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>ch.qos.logback.contrib</groupId>-->
+        <!--            <artifactId>logback-json-classic</artifactId>-->
+        <!--            <version>${logback.contrib.version}</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.fasterxml.jackson.core</groupId>-->
+        <!--            <artifactId>jackson-databind</artifactId>-->
+        <!--            <version>2.9.8</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>ch.qos.logback</groupId>-->
+        <!--            <artifactId>logback-classic</artifactId>-->
+        <!--            <version>1.2.3</version>-->
+        <!--        </dependency>-->
         <!--    <dependency>-->
         <!--      <groupId>io.vertx</groupId>-->
         <!--      <artifactId>vertx-dropwizard-metrics</artifactId>-->
@@ -172,30 +173,35 @@
         </dependency>
 
 
-<!--        <dependency>-->
-<!--            <groupId>io.vertx</groupId>-->
-<!--            <artifactId>vertx-cassandra-client</artifactId>-->
-<!--            <version>${vertx.version}</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>io.vertx</groupId>-->
+        <!--            <artifactId>vertx-cassandra-client</artifactId>-->
+        <!--            <version>${vertx.version}</version>-->
+        <!--        </dependency>-->
 
-      <dependency>
-        <groupId>com.datastax.oss</groupId>
-        <artifactId>java-driver-core</artifactId>
-        <version>${datastax-driver.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
+        <dependency>
+            <groupId>com.datastax.oss</groupId>
+            <artifactId>java-driver-core</artifactId>
+            <version>${datastax-driver.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.dropwizard.metrics</groupId>
+                    <artifactId>metrics-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-      <dependency>
-        <groupId>com.datastax.oss</groupId>
-        <artifactId>java-driver-query-builder</artifactId>
-        <version>${datastax-driver.version}</version>
-      </dependency>
+        <dependency>
+            <groupId>com.datastax.oss</groupId>
+            <artifactId>java-driver-query-builder</artifactId>
+            <version>${datastax-driver.version}</version>
+        </dependency>
 
+        <dependency>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-mapping</artifactId>
+            <version>3.5.0</version>
+        </dependency>
 
     </dependencies>
 
@@ -250,7 +256,7 @@
                         <configuration>
                             <transformers>
                                 <transformer
-                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <!--                    <Main-Class>io.vertx.core.Launcher</Main-Class>
                                         <Main-Verticle>${main.verticle}</Main-Verticle>-->
@@ -258,7 +264,7 @@
                                     </manifestEntries>
                                 </transformer>
                                 <transformer
-                                    implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>META-INF/services/io.vertx.core.spi.VerticleFactory</resource>
                                 </transformer>
                             </transformers>
@@ -292,8 +298,8 @@
                 <artifactId>vertx-maven-plugin</artifactId>
                 <version>1.0.13</version>
                 <configuration>
-                  <workDirectory>${project.basedir}</workDirectory>
-                  <config>src/main/conf/config.json</config>
+                    <workDirectory>${project.basedir}</workDirectory>
+                    <config>src/main/resources/conf/config.json</config>
                 </configuration>
             </plugin>
             <plugin>
@@ -302,8 +308,10 @@
                 <version>4.2.0</version>
                 <configuration>
                     <generateRoute>true</generateRoute>
-<!--                    <enableImageChangeTrigger>true</enableImageChangeTrigger>-->
+                    <enableImageChangeTrigger>true</enableImageChangeTrigger>
                     <!--<resourceDir>./src/main/resources</resourceDir>-->
+                    <!--                    <resourceDir>src/main/resources</resourceDir>-->
+<!--                    <enableImageChangeTrigger>true</enableImageChangeTrigger>-->
                     <resources>
                         <labels>
                             <all>
@@ -320,7 +328,7 @@
                         <goals>
                             <goal>resource</goal>
                             <goal>build</goal>
-                            <goal>deploy</goal>
+<!--                            <goal>deploy</goal>-->
                         </goals>
                     </execution>
                 </executions>

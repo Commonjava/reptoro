@@ -1,0 +1,20 @@
+spec:
+  template:
+    spec:
+      containers:
+        - name: vertx
+          env:
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: JAVA_OPTIONS
+              value: '-Xms4G -Xmx4G -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=4 -XX:MaxRAMFraction=2 -XX:ParallelGCThreads=20 -XX:ConcGCThreads=5 -XX:InitiatingHeapOccupancyPercent=70 -Dvertx.cacheDirBase=/tmp -Dvertx.disableDnsResolver=true'
+#          resources:
+#            limits:
+#              cpu: 4
+#              memory: 4G
+#            requests:
+#              cpu: 100m
+#              memory: 200Mi
