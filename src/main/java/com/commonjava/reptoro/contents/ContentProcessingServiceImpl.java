@@ -119,8 +119,8 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
         client
                 .head(indyPort,indyHost,path)
                 .followRedirects(true)
-                .basicAuthentication(indyUser, indyPass)
-                .timeout(TimeUnit.SECONDS.toMillis(60))
+//                .basicAuthentication(indyUser, indyPass)
+                .timeout(TimeUnit.SECONDS.toMillis(90))
                 .send(res -> {
                     if (res.succeeded()) {
                         HttpResponse<Buffer> result = res.result();
@@ -141,14 +141,16 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                             badHeadResponse.put("result" , result.bodyAsString());
                             badHeadResponse.put("http", "HEAD");
                             badHeadResponse.put("content","local");
-                            handler.handle(Future.succeededFuture(badHeadResponse));
+                            content.put("localheaders",badHeadResponse);
+                            handler.handle(Future.succeededFuture(content));
                         }
                     } else {
                         JsonObject failed = new JsonObject();
                         failed.put("timestamp" , Instant.now());
                         failed.put("success" , false);
                         failed.put("cause" , res.cause().getMessage());
-                        handler.handle(Future.succeededFuture(failed));
+                        content.put("localheaders",failed);
+                        handler.handle(Future.succeededFuture(content));
                     }
                 });
     }
@@ -164,51 +166,65 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
         try {
             sourceUrl = new URL(source);
             httpsSourceUrl = new URL(HTTPS, sourceUrl.getHost(), sourceUrl.getPort(), sourceUrl.getPath().substring(0,sourceUrl.getPath().length()-1) + path); //sourceUrl.getPath().substring(0,sourceUrl.getPath().length()-1) + path);
-        } catch (MalformedURLException e) {
-            handler.handle(Future.failedFuture(e.getMessage()));
+
+//          logger.info("[[CONTENT>SOURCE>URL]]: " + httpsSourceUrl.toString());
+
+
+            client
+              .headAbs(httpsSourceUrl.toString())
+              .followRedirects(true)
+              .timeout(TimeUnit.SECONDS.toMillis(90))
+              .send(res -> {
+              if (res.succeeded()) {
+                HttpResponse<Buffer> result = res.result();
+                if (result.statusCode() == 200) {
+                  Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+                  JsonObject headersJson = new JsonObject();
+                  while (headers.hasNext()) {
+                    Map.Entry<String, String> headerTuple = headers.next();
+                    headersJson.put(headerTuple.getKey(), headerTuple.getValue());
+                  }
+                  content.put("sourceheaders",headersJson);
+                  handler.handle(Future.succeededFuture(content));
+                } else {
+                  JsonObject badHeadResponse = new JsonObject();
+                  badHeadResponse.put("badresponse" , true);
+                  badHeadResponse.put("timestamp" , Instant.now());
+                  badHeadResponse.put("result" , result.bodyAsString());
+                  badHeadResponse.put("http", "HEAD");
+                  badHeadResponse.put("content","source");
+                  Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+                  while (headers.hasNext()) {
+                    Map.Entry<String, String> headerTuple = headers.next();
+                    badHeadResponse.put(headerTuple.getKey(), headerTuple.getValue());
+                  }
+                  content.put("sourceheaders",badHeadResponse);
+                  handler.handle(Future.succeededFuture(content));
+                }
+              } else {
+                JsonObject failed = new JsonObject();
+                failed.put("timestamp" , Instant.now());
+                failed.put("success" , false);
+                failed.put("cause" , res.cause().getMessage());
+                content.put("sourceheaders",failed);
+                handler.handle(Future.succeededFuture(content));
+              }
+            });
+
+
         }
-
-//        logger.info("[[CONTENT>REMOTE>URL]]: " + httpsSourceUrl.toString());
-
-        client
-                .headAbs(httpsSourceUrl.toString())
-                .followRedirects(true)
-//      .basicAuthentication(indyUser, indyPass)
-                .send(res -> {
-                    if (res.succeeded()) {
-                        HttpResponse<Buffer> result = res.result();
-                        if (result.statusCode() == 200) {
-                            Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
-                            JsonObject headersJson = new JsonObject();
-                            while (headers.hasNext()) {
-                                Map.Entry<String, String> headerTuple = headers.next();
-                                headersJson.put(headerTuple.getKey(), headerTuple.getValue());
-                            }
-                            content.put("sourceheaders",headersJson);
-                            handler.handle(Future.succeededFuture(content));
-                        } else {
-                            JsonObject badHeadResponse = new JsonObject();
-                            badHeadResponse.put("badresponse" , true);
-                            badHeadResponse.put("timestamp" , Instant.now());
-                            badHeadResponse.put("result" , result.bodyAsString());
-                            badHeadResponse.put("http", "HEAD");
-                            badHeadResponse.put("content","source");
-                            Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
-                            while (headers.hasNext()) {
-                                Map.Entry<String, String> headerTuple = headers.next();
-                                badHeadResponse.put(headerTuple.getKey(), headerTuple.getValue());
-                            }
-                            content.put("sourceheaders",badHeadResponse);
-                            handler.handle(Future.succeededFuture(badHeadResponse));
-                        }
-                    } else {
-                        JsonObject failed = new JsonObject();
-                        failed.put("timestamp" , Instant.now());
-                        failed.put("success" , false);
-                        failed.put("cause" , res.cause().getMessage());
-                        handler.handle(Future.failedFuture(failed.encode()));
-                    }
-                });
+        catch (Exception e) {
+          JsonObject me =
+            new JsonObject().put("url", sourceUrl)
+            .put("path", path)
+            .put("exception", e.getMessage())
+            .put("timestamp", Instant.now())
+            .put("badresponse", true)
+            .put("http", "HEAD")
+            .put("content", "source");
+          content.put("sourceheaders",me);
+          handler.handle(Future.succeededFuture(content));
+        }
 
     }
 
@@ -234,7 +250,7 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                 data.put("filesystem", row.getString("filesystem"));
                 data.put("parentpath", row.getString("parentpath"));
                 data.put("filename", row.getString("filename"));
-                data.put("checksum", row.getString("checksum"));
+                data.put("checksum", ""); // row.getString("checksum")
                 data.put("fileid", row.getString("fileid"));
                 data.put("filestorage", row.getString("filestorage"));
                 data.put("size", row.getLong("size"));
@@ -296,76 +312,10 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                     }
                 });
 
-//                while (!result.isFullyFetched()) {
-//                    result.all(ar -> {
-//                        List<Row> results = ar.result();
-//                        for(Row row: results) {
-//                            JsonObject data = new JsonObject();
-//                            data.put("filesystem", row.getString("filesystem"));
-//                            data.put("parentpath", row.getString("parentpath"));
-//                            data.put("filename", row.getString("filename"));
-//                            data.put("checksum", row.getString("checksum"));
-//                            data.put("fileid", row.getString("fileid"));
-//                            data.put("filestorage", row.getString("filestorage"));
-//                            data.put("size", row.getLong("size"));
-//                            dataArr.add(data);
-//                        }
-//
-//                    });
-//                    if(result.getAvailableWithoutFetching() == 100 && !result.isFullyFetched()) {
-//                        result.fetchMoreResults(bwr -> {
-//                            logger.info("... Fetching More...");
-//                        });
-//                    }
-//                }
                 JsonObject repoAndContents = new JsonObject();
                 repoAndContents.put("data", dataArr);
                 repoAndContents.put("repo", repo);
                 handler.handle(Future.succeededFuture(repoAndContents));
-//                result.all(ar -> {
-//                    if(ar.succeeded()) {
-//                        List<Row> results = ar.result();
-//
-//                        Iterator<Row> iterator = results.iterator();
-//                        while (iterator.hasNext()) {
-//                            if(!result.isFullyFetched()) {
-//                                Row row = iterator.next();
-//                                JsonObject data = new JsonObject();
-//                                data.put("filesystem", row.getString("filesystem"));
-//                                data.put("parentpath", row.getString("parentpath"));
-//                                data.put("filename", row.getString("filename"));
-//                                data.put("checksum", row.getString("checksum"));
-//                                data.put("fileid", row.getString("fileid"));
-//                                data.put("filestorage", row.getString("filestorage"));
-//                                data.put("size", row.getLong("size"));
-//                                dataArr.add(data);
-//                            }
-//                        }
-//                            JsonObject repoAndContents = new JsonObject();
-//                            repoAndContents.put("data", dataArr);
-//                            repoAndContents.put("repo", repo);
-//                            handler.handle(Future.succeededFuture(repoAndContents));
-////                        for(Row row : results) {
-////                            JsonObject data = new JsonObject();
-////                            data.put("filesystem", row.getString("filesystem"));
-////                            data.put("parentpath", row.getString("parentpath"));
-////                            data.put("filename", row.getString("filename"));
-////                            data.put("checksum", row.getString("checksum"));
-////                            data.put("fileid", row.getString("fileid"));
-////                            data.put("filestorage", row.getString("filestorage"));
-////                            data.put("size", row.getLong("size"));
-////                            dataArr.add(data);
-////                        }
-////                        JsonObject repoAndContents = new JsonObject();
-////                        repoAndContents.put("data", dataArr);
-////                        repoAndContents.put("repo", repo);
-////                        handler.handle(Future.succeededFuture(repoAndContents));
-//                    } else {
-//                        handler.handle(Future.failedFuture(res.cause()));
-//                    }
-//                });
-
-
             } else {
                 handler.handle(Future.failedFuture(res.cause()));
             }

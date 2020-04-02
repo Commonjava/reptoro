@@ -48,7 +48,7 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
         this.repoFetched = false;
-        DeliveryOptions options = new DeliveryOptions().setSendTimeout(120000);
+        DeliveryOptions options = new DeliveryOptions().setSendTimeout(180000);
         this.repoService = RemoteRepositoryService.createProxyWithOptions(vertx,"repo.service",options);
         this.cassandraClient = new com.commonjava.reptoro.common.CassandraClient(vertx,config()).getCassandraReptoroClientInstance();
         MappingManager mappingManagerRepos = MappingManager.create(this.cassandraClient);
@@ -116,7 +116,9 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
                     if (res.succeeded()) {
                        CompositeFuture.join(
                                 res.result().stream()
-                                    .map(repo -> recordInDb(repo).compose(this::recordSave).setHandler(this::handleSuccessOrFailure))
+                                    .map(repo -> recordInDb(repo).compose(this::recordSave)
+//                                      .setHandler(this::handleSuccessOrFailure)
+                                    )
                                 .collect(Collectors.toList())
                        ).onComplete(ar -> {
                             if(ar.succeeded()) {
@@ -144,7 +146,7 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
                     JsonObject repo = asyncResult.result();
                     vertx.eventBus().send(Topics.REPO_START , repo );
                 } else {
-                    logger.info("FAILED FETCHING REPO FROM DB! OR ALL REPOSITORIES AS PROCESSED!");
+                    logger.info("FAILED FETCHING REPO FROM DB! OR ALL REPOSITORIES ARE PROCESSED!");
                     // TODO Failure starting processing repo handler!
                 }
             });
@@ -203,6 +205,7 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
                     contents.stream()
                         .map(content -> new JsonObject(content.toString()))
                         .map(content -> content.put("source", url))
+                        .map(content -> content.put("checksum",""))
                         .map(content -> content.put("localheaders",new JsonObject()))
                         .map(content -> content.put("sourceheaders",new JsonObject()))
                         .collect(Collectors.toList());

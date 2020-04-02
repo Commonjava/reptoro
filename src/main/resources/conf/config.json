@@ -8,7 +8,10 @@
     "mavenApi": "/admin/stores/maven/remote",
     "npmApi": "/admin/stores/npm/remote",
     "browsedStoreApi": "/browse/maven/remote/",
-    "contentStoreApi": "/content/maven/remote/"
+    "contentStoreApi": "/content/maven/remote/",
+    "sealedRecordsApi": "/folo/admin/report/ids/all",
+    "sealedRecordReportApi": "/folo/admin/",
+    "browseSharedImportsApi": "/browse/maven/hosted/shared-imports"
   },
   "cassandra": {
     "hostname": "cassandra-cluster.newcastle-stage.svc",
@@ -25,7 +28,15 @@
   "reptoro": {
     "except.remote.repos": ["maven:remote:prod-shared-imports","maven:remote:i-brewroot-4","maven:remote:i-brewroot-9","maven:remote:fusesource-proxy","maven:remote:test_remote","maven:remote:i-jb-eap-7.1-brew-2","maven:remote:i-brew.jb.common"],
     "except.filename.extensions": ["maven-metadata.xml", ".sha1", ".md5", ".asc",".listing.txt"],
-    "allowed.file.extensions": ["pom","zip","jar","tar","txt","war","ear"]
+    "allowed.file.extensions": ["pom","zip","jar","tar","war","ear","xml"]
+  },
+  "keycloak": {
+    "realm": "pncredhat",
+    "auth-server-url": "https://secure-sso.newcastle-stage.svc/auth",
+    "ssl-required": "external",
+    "resource": "reptoro",
+    "public-client": true,
+    "confidential-port": 0
   },
   "mockdata": {
     "type": "remote",

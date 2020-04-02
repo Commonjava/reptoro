@@ -41,7 +41,8 @@ public class SaveHeadersVerticle extends AbstractVerticle {
 
         contentMapper.save(new Content(contentWithLocalAndSourceHeaders), update -> {
             if(update.succeeded()) {
-                logger.info("CONTENT HEADERS UPDATE SAVED!");
+//                logger.info("CONTENT HEADERS UPDATE SAVED!");
+//              System.out.print(".");
             } else {
                 logger.info("CONTENT HEADERS UPDATE FAILED: " + update.cause());
             }

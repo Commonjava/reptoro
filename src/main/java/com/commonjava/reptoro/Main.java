@@ -1,10 +1,12 @@
 package com.commonjava.reptoro;
 
+import com.commonjava.reptoro.common.ApiController;
 import com.commonjava.reptoro.common.Topics;
 import com.commonjava.reptoro.contents.ContentProcessingVerticle;
 import com.commonjava.reptoro.headers.HeadersProcessingVerticle;
 import com.commonjava.reptoro.remoterepos.RemoteRepositoryService;
 import com.commonjava.reptoro.remoterepos.RemoteRepositoryVerticle;
+import com.commonjava.reptoro.sharedimports.SharedImportsService;
 import com.commonjava.reptoro.sharedimports.SharedImportsVerticle;
 import com.commonjava.reptoro.stores.BrowsedStoreVerticle;
 import com.commonjava.reptoro.common.ReptoroConfig;
@@ -30,9 +32,11 @@ public class Main {
     private static String contentProcessingVerticleName = "contents";
     private static String headersProcessingVerticleName = "headers";
     private static String sharedImportsVerticleName = "sharedimports";
+    private static String apiControllerVerticleName = "reptoroapicontroller";
 
     private static Vertx vertx;
     private static RemoteRepositoryService repoService;
+    private static SharedImportsService sharedImportsService;
 
     public static void main(String[] args) {
 
@@ -59,13 +63,11 @@ public class Main {
 
         vertx.exceptionHandler(res -> {
             String message = res.getMessage();
-            Throwable cause = res.getCause();
 
             JsonObject vertxException = new JsonObject()
                     .put("message", message)
-                    .put("time", Instant.now())
-                    .put("cause", cause.getLocalizedMessage());
-            logger.info(vertxException.encodePrettily());
+                    .put("time", Instant.now());
+            logger.info("==================\n" + vertxException.encodePrettily() + "\n=====================");
         });
 
         ConfigRetrieverOptions configRetrivierOptions =
@@ -75,6 +77,16 @@ public class Main {
         retriever.getConfig(res -> {
 
             if(res.succeeded()) {
+
+              Future apiVerticleFuture = Future.future(promise -> {
+                ApiController apiVerticle = new ApiController();
+                DeploymentOptions apiControllerOptions = new DeploymentOptions().setWorker(true).setConfig(res.result());
+
+                vertx.deployVerticle(apiVerticle, apiControllerOptions,
+                  ar -> ar.map(id -> handleSucessfullDeployment(apiControllerVerticleName, id, promise))
+                    .otherwise(t -> handleFailedDeployment(apiControllerVerticleName, t, promise))
+                );
+              });
 
                 Future repoVerticleFuture = Future.future(promise -> {
                     RemoteRepositoryVerticle repositoryVerticle = new RemoteRepositoryVerticle();
@@ -128,11 +140,13 @@ public class Main {
 
                 // Create CompositeFuture to wait for verticles to start
                 CompositeFuture.join(
+                        apiVerticleFuture,
                         repoVerticleFuture,
-                        browsedVerticleFuture,
+//                        browsedVerticleFuture,
                         contentVerticleFuture,
                         headersVerticleFuture,
-                        sharedImportsVerticleFuture)
+                        sharedImportsVerticleFuture
+                )
                 .onSuccess(ar -> handleApplicationStartedSucess(ar))
                 .onFailure(t -> handleApplicationStartedFailure(t));
 
@@ -148,27 +162,28 @@ public class Main {
     }
 
     private static Void handleFailedDeployment(String verticleName, Throwable t, Promise promise) {
-        logger.log(Level.INFO , "Verticle {0} failed to deployed: {1}" , new Object[] { verticleName , t } );
+        logger.log(Level.INFO , "--- Verticle {0} failed to deployed: {1} ---" , new Object[] { verticleName , t } );
         promise.complete();
         return null;
     }
 
     private static Void handleSucessfullDeployment(String verticleName, String id, Promise promise) {
-        logger.log(Level.INFO , "Verticle {0} deployed: {1}" , new Object[] { verticleName , id } );
+        logger.log(Level.INFO , "--- Verticle {0} deployed: {1} ---" , new Object[] { verticleName , id } );
         promise.complete();
         return null;
     }
 
     private static Void handleApplicationStartedSucess(CompositeFuture future) {
-        logger.info("Application has started, go to http://[hostname]:8080 to see the app running.\n");
+        logger.info("===< Application has started, " + System.getProperty("REPTORO_SERVICE_HOST") +" to see the app running >===");
 
         // Create Keyspace and Create Table in Cassandra DB!
         repoService = RemoteRepositoryService.createProxy(vertx,"repo.service");
+        sharedImportsService = SharedImportsService.createProxy(vertx,"shared.imports.service");
 
         // Create Reptoro Remote Repositories Keyspace (If not exists) ...
         repoService.createReptoroRepositoriesKeyspace(res -> {
             if(res.succeeded()) {
-                logger.info("[[KEYSPACE>REPTORO>SUCESS]] " + res.result());
+                logger.info("\t\t\t\t\t[[KEYSPACE>REPTORO>SUCESS]] " + res.result());
             } else {
                 logger.info("[[KEYSPACE>REPTORO>FAILED]] " + res.cause());
             }
@@ -176,7 +191,7 @@ public class Main {
         // Create Reptoro Remote Repositories Table (If not exists) ...
         repoService.creteReptoroRepositoriesTable(res -> {
             if(res.succeeded()) {
-                logger.info("[[TABLE>REPOSITORIES>SUCESS]] " + res.result());
+                logger.info("\t\t\t\t\t[[TABLE>REPOSITORIES>SUCESS]] " + res.result());
             } else {
                 logger.info("[[TABLE>REPOSITORIES>FAILURE]] " + res.cause());
             }
@@ -185,10 +200,18 @@ public class Main {
         // Create Reptoro Contents Repositories Table (If not exists) ...
         repoService.creteReptoroContentsTable(res -> {
             if(res.succeeded()) {
-                logger.info("[[TABLE>CONTENTS>SUCESS]] " + res.result());
+                logger.info("\t\t\t\t\t[[TABLE>CONTENTS>SUCESS]] " + res.result());
             } else {
                 logger.info("[[TABLE>CONTENTS>FAILURE]] " + res.cause());
             }
+        });
+        // Create Reptoro SharedImports Table (If not exists) ...
+        sharedImportsService.createTableSharedImports(res -> {
+          if(res.failed()) {
+            logger.info("[[TABLE>SHAREDIMPORTS>FAILURE]] " + res.cause());
+          } else {
+            logger.info("\t\t\t\t\t[[TABLE>SHAREDIMPORTS>SUCESS]] " + res.result());
+          }
         });
 
         return null;
