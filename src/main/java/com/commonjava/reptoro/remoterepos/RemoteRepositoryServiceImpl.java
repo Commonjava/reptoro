@@ -14,10 +14,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static com.commonjava.reptoro.remoterepos.RemoteRepository.toJson;
@@ -101,9 +98,16 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
                     } else {
                         logger.info("\t ===> INDY HAS RESPONDED '"+result.statusCode()+"' <===\n\t\tRESPONSE: " + result.bodyAsString());
                         JsonObject entries = new JsonObject();
+                        Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+                        JsonObject headersJson = new JsonObject();
+                        while (headers.hasNext()) {
+                          Map.Entry<String, String> headerTuple = headers.next();
+                          headersJson.put(headerTuple.getKey(), headerTuple.getValue());
+                        }
                         entries.put("timestamp", Instant.now());
                         entries.put("result",result.bodyAsString());
-                        entries.put("headers", JsonObject.mapFrom(result.headers()));
+                        entries.put("headers", headersJson);
+                        entries.put("statuscode",result.statusCode());
                         handler.handle(Future.succeededFuture(entries));
                     }
                 });

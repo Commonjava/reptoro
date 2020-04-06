@@ -1,6 +1,7 @@
 package com.commonjava.reptoro.contents;
 
 
+import com.commonjava.reptoro.common.Const;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.QueryExecutionException;
@@ -120,7 +121,7 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                 .head(indyPort,indyHost,path)
                 .followRedirects(true)
 //                .basicAuthentication(indyUser, indyPass)
-                .timeout(TimeUnit.SECONDS.toMillis(90))
+                .timeout(TimeUnit.SECONDS.toMillis(119))
                 .send(res -> {
                     if (res.succeeded()) {
                         HttpResponse<Buffer> result = res.result();
@@ -131,7 +132,7 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                                 Map.Entry<String, String> headerTuple = headers.next();
                                 headersJson.put(headerTuple.getKey(), headerTuple.getValue());
                             }
-                            content.put("localheaders",headersJson);
+                            content.put(Const.LOCALHEADERS,headersJson);
                             handler.handle(Future.succeededFuture(content));
 
                         } else {
@@ -141,7 +142,7 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                             badHeadResponse.put("result" , result.bodyAsString());
                             badHeadResponse.put("http", "HEAD");
                             badHeadResponse.put("content","local");
-                            content.put("localheaders",badHeadResponse);
+                            content.put(Const.LOCALHEADERS,badHeadResponse);
                             handler.handle(Future.succeededFuture(content));
                         }
                     } else {
@@ -149,7 +150,7 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                         failed.put("timestamp" , Instant.now());
                         failed.put("success" , false);
                         failed.put("cause" , res.cause().getMessage());
-                        content.put("localheaders",failed);
+                        content.put(Const.LOCALHEADERS,failed);
                         handler.handle(Future.succeededFuture(content));
                     }
                 });
@@ -169,49 +170,6 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
 
 //          logger.info("[[CONTENT>SOURCE>URL]]: " + httpsSourceUrl.toString());
 
-
-            client
-              .headAbs(httpsSourceUrl.toString())
-              .followRedirects(true)
-              .timeout(TimeUnit.SECONDS.toMillis(90))
-              .send(res -> {
-              if (res.succeeded()) {
-                HttpResponse<Buffer> result = res.result();
-                if (result.statusCode() == 200) {
-                  Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
-                  JsonObject headersJson = new JsonObject();
-                  while (headers.hasNext()) {
-                    Map.Entry<String, String> headerTuple = headers.next();
-                    headersJson.put(headerTuple.getKey(), headerTuple.getValue());
-                  }
-                  content.put("sourceheaders",headersJson);
-                  handler.handle(Future.succeededFuture(content));
-                } else {
-                  JsonObject badHeadResponse = new JsonObject();
-                  badHeadResponse.put("badresponse" , true);
-                  badHeadResponse.put("timestamp" , Instant.now());
-                  badHeadResponse.put("result" , result.bodyAsString());
-                  badHeadResponse.put("http", "HEAD");
-                  badHeadResponse.put("content","source");
-                  Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
-                  while (headers.hasNext()) {
-                    Map.Entry<String, String> headerTuple = headers.next();
-                    badHeadResponse.put(headerTuple.getKey(), headerTuple.getValue());
-                  }
-                  content.put("sourceheaders",badHeadResponse);
-                  handler.handle(Future.succeededFuture(content));
-                }
-              } else {
-                JsonObject failed = new JsonObject();
-                failed.put("timestamp" , Instant.now());
-                failed.put("success" , false);
-                failed.put("cause" , res.cause().getMessage());
-                content.put("sourceheaders",failed);
-                handler.handle(Future.succeededFuture(content));
-              }
-            });
-
-
         }
         catch (Exception e) {
           JsonObject me =
@@ -222,9 +180,52 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
             .put("badresponse", true)
             .put("http", "HEAD")
             .put("content", "source");
-          content.put("sourceheaders",me);
+          content.put(Const.SOURCEHEADERS,me);
           handler.handle(Future.succeededFuture(content));
         }
+
+      client
+        .headAbs(httpsSourceUrl.toString())
+        .followRedirects(true)
+        .timeout(TimeUnit.SECONDS.toMillis(110))
+        .send(res -> {
+          if (res.succeeded()) {
+            HttpResponse<Buffer> result = res.result();
+            if (result.statusCode() == 200) {
+              Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+              JsonObject headersJson = new JsonObject();
+              while (headers.hasNext()) {
+                Map.Entry<String, String> headerTuple = headers.next();
+                headersJson.put(headerTuple.getKey(), headerTuple.getValue());
+              }
+              content.put(Const.SOURCEHEADERS,headersJson);
+              handler.handle(Future.succeededFuture(content));
+            }
+            else {
+              JsonObject badHeadResponse = new JsonObject();
+              badHeadResponse.put("badresponse" , true);
+              badHeadResponse.put("timestamp" , Instant.now());
+              badHeadResponse.put("result" , result.bodyAsString());
+              badHeadResponse.put("http", "HEAD");
+              badHeadResponse.put("content","source");
+              Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+              while (headers.hasNext()) {
+                Map.Entry<String, String> headerTuple = headers.next();
+                badHeadResponse.put(headerTuple.getKey(), headerTuple.getValue());
+              }
+              content.put(Const.SOURCEHEADERS,badHeadResponse);
+              handler.handle(Future.succeededFuture(content));
+            }
+          } else {
+            JsonObject failed = new JsonObject();
+            failed.put("timestamp" , Instant.now());
+            failed.put("success" , false);
+            failed.put("cause" , res.cause().getMessage());
+            content.put(Const.SOURCEHEADERS,failed);
+            handler.handle(Future.succeededFuture(content));
+          }
+        });
+
 
     }
 
@@ -350,8 +351,8 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
                            data.put("fileid", row.getString("fileid"));
                            data.put("filestorage", row.getString("filestorage"));
                            data.put("size", row.getLong("size"));
-                           data.put("sourceheaders" , row.getString("sourceheaders"));
-                           data.put("localheaders" , row.getString("localheaders"));
+                           data.put(Const.SOURCEHEADERS , row.getString("sourceheaders"));
+                           data.put(Const.LOCALHEADERS , row.getString("localheaders"));
                            data.put("source" , row.getString("source"));
                            dataArr.add(data);
 

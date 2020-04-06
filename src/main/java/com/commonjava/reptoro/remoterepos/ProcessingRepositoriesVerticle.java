@@ -1,6 +1,7 @@
 package com.commonjava.reptoro.remoterepos;
 
 
+import com.commonjava.reptoro.common.Const;
 import com.commonjava.reptoro.common.RepoStage;
 import com.commonjava.reptoro.common.Topics;
 import com.commonjava.reptoro.contents.Content;
@@ -49,14 +50,14 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
         super.init(vertx, context);
         this.repoFetched = false;
         DeliveryOptions options = new DeliveryOptions().setSendTimeout(180000);
-        this.repoService = RemoteRepositoryService.createProxyWithOptions(vertx,"repo.service",options);
+        this.repoService = RemoteRepositoryService.createProxyWithOptions(vertx, Const.REPO_SERVICE,options);
         this.cassandraClient = new com.commonjava.reptoro.common.CassandraClient(vertx,config()).getCassandraReptoroClientInstance();
         MappingManager mappingManagerRepos = MappingManager.create(this.cassandraClient);
         MappingManager mappingManagerContents = MappingManager.create(this.cassandraClient);
         this.mapper = mappingManagerRepos.mapper(RemoteRepository.class);
         this.contentMapper = mappingManagerContents.mapper(Content.class);
         this.indyCassandraClient = new com.commonjava.reptoro.common.CassandraClient(vertx,config()).getCassandraIndyClientInstance();
-        this.contentProcessingService = ContentProcessingService.createProxy(vertx,"content.service");
+        this.contentProcessingService = ContentProcessingService.createProxy(vertx,Const.CONTENT_SERVICE);
 
         CassandraClientOptions cassandraClientOptions = new CassandraClientOptions();
         JsonObject cassandraConfig = config().getJsonObject("cassandra");
@@ -206,8 +207,8 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
                         .map(content -> new JsonObject(content.toString()))
                         .map(content -> content.put("source", url))
                         .map(content -> content.put("checksum",""))
-                        .map(content -> content.put("localheaders",new JsonObject()))
-                        .map(content -> content.put("sourceheaders",new JsonObject()))
+                        .map(content -> content.put(Const.LOCALHEADERS,new JsonObject()))
+                        .map(content -> content.put(Const.SOURCEHEADERS,new JsonObject()))
                         .collect(Collectors.toList());
             JsonArray objects = new JsonArray(contentsList);
 
@@ -308,7 +309,9 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
                 changeRepositoryStateToContent(contentsAndKey.getString("key"))
                         .setHandler(res -> {
                             if(res.succeeded()) {
-                                logger.info("REPO STAGE CHANGED: " + res.result().encodePrettily() + "\n NEXT STAGE...");
+                              JsonObject repo = res.result();
+                              logger.info("REPO STAGE CHANGED: " + repo.encodePrettily() + "\n NEXT STAGE...");
+                              contentsAndKey.put("repo",repo);
                                 vertx.setTimer(TimeUnit.SECONDS.toMillis(30) , timer -> {
                                     vertx.eventBus().send(Topics.CONTENT_HEADERS , contentsAndKey);
                                 });
@@ -343,11 +346,15 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
         String packageType = "maven";
         repoService.fetchRemoteRepositories(packageType , res -> {
             if(res.succeeded()) {
+              if(Objects.nonNull(res.result()) && !res.result().containsKey("result")) {
                 JsonObject result = res.result();
                 logger.info("= ITEMS SIZE: " + result.getJsonArray("items").size());
                 List<JsonObject> repoList = new RemoteRepositories(config(),vertx).filterMavenNonSslRemoteRepositories(result);
                 logger.info("== FILTERED ITEMS: " + repoList.size());
                 promise.complete(repoList);
+              } else {
+                logger.info("INDY-BAD RESPONSE: " + res.result().encodePrettily());
+              }
             } else {
                 promise.fail(res.cause());
             }

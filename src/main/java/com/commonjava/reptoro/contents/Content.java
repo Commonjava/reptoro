@@ -1,6 +1,7 @@
 package com.commonjava.reptoro.contents;
 
 
+import com.commonjava.reptoro.common.Const;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -62,22 +63,26 @@ public class Content {
   }
 
   public Content(JsonObject content) {
-    if (content.containsKey("localheaders") && content.getValue("localheaders") instanceof JsonObject) {
-      this.localheaders = content.getJsonObject("localheaders").encode();
+    if (content.containsKey(Const.LOCALHEADERS) && content.getValue(Const.LOCALHEADERS) instanceof JsonObject) {
+      this.localheaders = content.getJsonObject(Const.LOCALHEADERS).encode();
     } else {
-      this.localheaders = content.getString("localheaders");
+      this.localheaders = content.getString(Const.LOCALHEADERS);
     }
 
-    if (content.containsKey("sourceheaders") && content.getValue("sourceheaders") instanceof JsonObject) {
-      this.localheaders = content.getJsonObject("sourceheaders").encode();
+    if (content.containsKey(Const.SOURCEHEADERS) && content.getValue(Const.SOURCEHEADERS) instanceof JsonObject) {
+      this.sourceheaders = content.getJsonObject(Const.SOURCEHEADERS).encode();
     } else {
-      this.localheaders = content.getString("sourceheaders");
+      this.sourceheaders = content.getString(Const.SOURCEHEADERS);
     }
     this.source = content.getString("source");
     this.filesystem = content.getString("filesystem");
     this.parentpath = content.getString("parentpath");
     this.filename = content.getString("filename");
-    this.checksum = content.getString("checksum");
+    if(content.containsKey("checksum") && content.getValue("checksum") instanceof Boolean) {
+      this.checksum =  Boolean.toString(content.getBoolean("checksum"));
+    } else {
+      this.checksum = content.getString("checksum");
+    }
     this.fileid = content.getString("fileid");
     this.filestorage = content.getString("filestorage");
     this.size = content.getLong("size");

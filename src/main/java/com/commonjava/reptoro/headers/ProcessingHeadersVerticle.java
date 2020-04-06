@@ -1,5 +1,6 @@
 package com.commonjava.reptoro.headers;
 
+import com.commonjava.reptoro.common.Const;
 import com.commonjava.reptoro.common.RepoStage;
 import com.commonjava.reptoro.common.Topics;
 import com.commonjava.reptoro.contents.Content;
@@ -80,9 +81,9 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
     Promise<JsonObject> promise = Promise.promise();
     contentProcessingService.getContentsFromDb(repo, res -> {
       if (res.succeeded()) {
-        JsonObject contentsAndRepo = res.result();
-        logger.info("[[COMPARE_HEADERS]] " + contentsAndRepo.getJsonArray("data").size() + " CONTENTS");
-        promise.complete(contentsAndRepo);
+        JsonObject contentsRepoKey = res.result();
+        logger.info("[[COMPARE_HEADERS]] " + contentsRepoKey.getJsonArray("data").size() + " CONTENTS");
+        promise.complete(contentsRepoKey);
       } else {
         promise.complete();
       }
@@ -100,7 +101,7 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
         CompositeFuture.join(
           contents.stream()
             .map(content -> new JsonObject(content.toString()))
-            .filter(content -> content.containsKey("sourceheaders") || content.containsKey("localheaders"))
+            .filter(content -> content.containsKey("sourceheaders") && content.containsKey("localheaders"))
             .filter(content -> !content.getString("localheaders").equalsIgnoreCase("{}"))
             .filter(content -> !content.getString("sourceheaders").equalsIgnoreCase("{}"))
 //                            .filter(content -> !content.getString("checksum").equalsIgnoreCase("false"))
@@ -108,7 +109,7 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
             .filter(content -> content.getString("checksum").equalsIgnoreCase(""))
             .map(content -> compareContentHashes(content))
             .map(content -> contentInDb(content).compose(this::updateContent)
-              .setHandler(this::handleContentCompare)
+//              .setHandler(this::handleContentCompare)
             )
             .collect(Collectors.toList())
 
@@ -129,14 +130,21 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
 
   private JsonObject compareContentHashes(JsonObject content) {
 
-    JsonObject localheaders = new JsonObject(content.getString("localheaders"));
-    JsonObject sourceheaders = new JsonObject(content.getString("sourceheaders"));
+    String localheaders1 = content.containsKey(Const.LOCALHEADERS) ? content.getString(Const.LOCALHEADERS) : "";
+    String sourceheaders1 = content.containsKey(Const.SOURCEHEADERS) ? content.getString(Const.SOURCEHEADERS) : "";
+
+    if(localheaders1.equalsIgnoreCase("") || sourceheaders1.equalsIgnoreCase("")) {
+      return new JsonObject();
+    }
+
+    JsonObject localheaders = new JsonObject(localheaders1);
+    JsonObject sourceheaders = new JsonObject(sourceheaders1);
 
     String repoKey = content.getString("filesystem");
 
 //      logger.info("COMPARING: \n" + localheaders.encodePrettily() + "\nWITH\n" + sourceheaders.encodePrettily());
 
-    logger.info("CONTENT: " + content.encodePrettily());
+//    logger.info("CONTENT: " + content.encodePrettily());
 
     String localMd5 = localheaders.containsKey("INDY-MD5") ? localheaders.getString("INDY-MD5") : "";
     String localSha1 = localheaders.containsKey("INDY-SHA1") ? localheaders.getString("INDY-SHA1") : "";
@@ -151,73 +159,71 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
     boolean compareSha1 = false;
     boolean compareEtag = false;
 
-    Set<String> fieldNames = sourceheaders.fieldNames();
+//    logger.info("PROCESSING HEADERS...");
+    Set<String> fieldNames
+      = sourceheaders.fieldNames();
 
-    if (repoKey.equalsIgnoreCase("maven:remote:central")) {
-      logger.info("PROCESSING HEADERS FOR MAVEN CENTRAL...");
-      for (String fieldName : fieldNames) {
-        if (fieldName.toLowerCase().contains("x-checksum-md5")) {
-          sourceMd5 = sourceheaders.getString(fieldName);
-        } else if (fieldName.toLowerCase().contains("x-checksum-sha1")) {
-          sourceSha1 = sourceheaders.getString(fieldName);
-        } else if (fieldName.toLowerCase().equalsIgnoreCase("etag")) {
-          sourceEtag = sourceheaders.getString(fieldName);
-        } else {
-          sourceEtag = sourceheaders.getString(fieldName);
-        }
-      }
-    } else {
-      logger.info("PROCESSING HEADERS FOR MAVEN REPO...");
       for (String fieldName : fieldNames) {
         if (fieldName.toLowerCase().contains("md5")) {
           sourceMd5 = sourceheaders.getString(fieldName);
         } else if (fieldName.toLowerCase().contains("sha1")) {
           sourceSha1 = sourceheaders.getString(fieldName);
-        } else if (fieldName.toLowerCase().equalsIgnoreCase("etag")) {
-          sourceEtag = sourceheaders.getString(fieldName);
-        } else {
+        } else if (fieldName.toLowerCase().contains("etag")) {
           sourceEtag = sourceheaders.getString(fieldName);
         }
       }
-    }
 
+//    logger.info("STARTING CHECKSUM COMPARE...");
 
     if (Objects.nonNull(sourceMd5) && !sourceMd5.isEmpty()) {
-      compareMd5 = localMd5.equalsIgnoreCase(sourceMd5);
-      content.put("checksum", compareMd5 + ""); // String.valueOf(compareMd5));
+      compareMd5 = localMd5.equalsIgnoreCase(sourceMd5) || sourceMd5.contains(localMd5);
+      content.put("checksum", Boolean.toString(compareMd5)); // String.valueOf(compareMd5));
+      return content;
     } else if (Objects.nonNull(sourceSha1) && !sourceSha1.isEmpty()) {
-      compareSha1 = localSha1.equalsIgnoreCase(sourceSha1);
-      content.put("checksum", compareSha1 + ""); // String.valueOf(compareSha1));
+      compareSha1 = localSha1.equalsIgnoreCase(sourceSha1) || sourceSha1.contains(localSha1);
+      content.put("checksum", Boolean.toString(compareSha1)); // String.valueOf(compareSha1));
+      return content;
     } else {
-      if (Objects.nonNull(sourceEtag) && !sourceEtag.isEmpty()) {
-        if (repoKey.equalsIgnoreCase("maven:remote:central")) {
-          String etagChecksum = sourceEtag.split("\\\\")[1];
-          etagChecksum = etagChecksum.split("\\\\")[0];
+      if (!sourceEtag.isEmpty()) {
+        // \"ETag\":\"\\\"{SHA1{c49dc5a288f0bc5598375e68583d47c6bfbfe2cc}}\\\"\"
 
-          logger.info("MAVEN:REMOTE:CENTRAL: " + etagChecksum + "\n" + localMd5 + "\n" + localSha1);
-
-          if (etagChecksum.equalsIgnoreCase(localMd5) || etagChecksum.equalsIgnoreCase(localSha1)) {
-            compareEtag = true;
-            content.put("checksum", "true"); //String.valueOf(compareEtag));
+        if(sourceEtag.toLowerCase().contains("md5")) {
+          // compare localMd5 with inner md5 checksum
+          if(sourceEtag.contains(localMd5)) {
+            content.put("checksum","true");
+            return content;
+          } else {
+            content.put("checksum","false");
+            return content;
+          }
+        } else if(sourceEtag.toLowerCase().contains("sha1")) {
+          // compare localSha1 with inner sha1 checksum
+          if(sourceEtag.contains(localSha1)) {
+            content.put("checksum","true");
+            return content;
+          } else {
+            content.put("checksum","false");
+            return content;
           }
         } else {
-          String etagChecksum = sourceEtag.split("\\{")[2];
-          etagChecksum = etagChecksum.split("\\}")[0];
-
-          logger.info(etagChecksum + "\n" + localMd5 + "\n" + localSha1);
-
-          if (etagChecksum.equalsIgnoreCase(localMd5) || etagChecksum.equalsIgnoreCase(localSha1)) {
-            compareEtag = true;
-            content.put("checksum", "true"); //String.valueOf(compareEtag));
+          // can be sha256??? but for now return false
+          if(sourceEtag.toLowerCase().contains("sha256")) {
+            logger.info("SHA256 ETAG: " + content.getString("filename"));
+            content.put("checksum","false");
+            return content;
+          } else {
+            content.put("checksum","false");
+            return content;
           }
         }
 
       } else {
-        content.put("checksum", "false"); // String.valueOf(compareEtag));
+//        logger.info("EMPTY ETAG: " + sourceheaders.getString("ETAG"));
+        compareEtag = false;
+        content.put("checksum", Boolean.toString(compareEtag)); // String.valueOf(compareEtag));
+        return content;
       }
     }
-
-    return content;
   }
 
   private Future<JsonObject> contentInDb(JsonObject contentWithLocalAndSourceHeaders) {
@@ -254,19 +260,20 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
     if (Objects.nonNull(contentWithLocalAndSourceHeaders)) {
 
 //          logger.info(contentWithLocalAndSourceHeaders.encodePrettily());
-//          Content content = Content.fromJson(contentWithLocalAndSourceHeaders);
+          Content content = Content.fromJson(contentWithLocalAndSourceHeaders);
 
-      vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
-      promise.complete(contentWithLocalAndSourceHeaders);
-//          contentMapper.save(content, update -> {
-//                if(update.succeeded()) {
-////                  logger.info("\t\t\t\tUPDATED CONTENT COMPARE AT COMPARING CHECKSUMS: " + contentWithLocalAndSourceHeaders.getString("checksum"));
-//                    promise.complete(contentWithLocalAndSourceHeaders);
-//                } else {
-//                    logger.info("\t\t\t\tUPDATE CONTENT COMPARE AT COMPARING CHECKSUMS FAILED: " + update.cause());
-//                    promise.complete();
-//                }
-//            });
+          // TODO if there is problem saving headers in db then send them to SAVE_HEADERS verticle...
+//      vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
+//      promise.complete(contentWithLocalAndSourceHeaders);
+          contentMapper.save(content, update -> {
+                if(update.succeeded()) {
+//                  logger.info("\t\t\t\tUPDATED CONTENT COMPARE AT COMPARING CHECKSUMS: " + contentWithLocalAndSourceHeaders.getString("checksum"));
+                    promise.complete(contentWithLocalAndSourceHeaders);
+                } else {
+                    logger.info("\t\t\t\tUPDATE CONTENT COMPARE AT COMPARING CHECKSUMS FAILED: " + update.cause());
+                    promise.complete();
+                }
+            });
     } else {
       logger.info("CONTENT COMPARE GET FAILURE /NULL");
     }
@@ -275,7 +282,7 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
 
   private void handleContentCompare(AsyncResult<JsonObject> asyncResult) {
     if (asyncResult.failed()) {
-      logger.info("============< CONTENT COMPARE HEADERS FAILED: " + asyncResult + " >=============");
+      logger.info("============< CONTENT COMPARE HEADERS FAILED: " + asyncResult.cause() + " >=============");
     } else {
       if (Objects.nonNull(asyncResult.result())) {
         logger.info("============< CONTENT COMPARE HEADER SUCCEEDED >=============");
@@ -306,7 +313,7 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
         logger.info("HEADERS COMPARE FAILURE /NULL");
       }
     } else {
-      logger.info(" PROBLEM COMPARING HEADERS: " + objectAsyncResult);
+      logger.info(" FAILED FUTURE IN COMPARING HEADERS: " + objectAsyncResult.cause());
     }
   }
 

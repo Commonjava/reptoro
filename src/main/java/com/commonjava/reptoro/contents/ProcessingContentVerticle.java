@@ -1,6 +1,7 @@
 package com.commonjava.reptoro.contents;
 
 
+import com.commonjava.reptoro.common.Const;
 import com.commonjava.reptoro.common.RepoStage;
 import com.commonjava.reptoro.common.Topics;
 import com.commonjava.reptoro.remoterepos.RemoteRepository;
@@ -40,8 +41,8 @@ public class ProcessingContentVerticle extends AbstractVerticle {
     super.init(vertx, context);
     DeliveryOptions options = new DeliveryOptions();
     options.setSendTimeout(TimeUnit.SECONDS.toMillis(120));
-    this.remoteRepositoryService = RemoteRepositoryService.createProxy(vertx, "repo.service");
-    this.contentProcessingService = ContentProcessingService.createProxyWithOptions(vertx, "content.service", options);
+    this.remoteRepositoryService = RemoteRepositoryService.createProxy(vertx, Const.REPO_SERVICE);
+    this.contentProcessingService = ContentProcessingService.createProxyWithOptions(vertx, Const.CONTENT_SERVICE, options);
     this.config = vertx.getOrCreateContext().config();
 
     this.cassandraClient = new com.commonjava.reptoro.common.CassandraClient(vertx, config()).getCassandraReptoroClientInstance();
@@ -76,12 +77,13 @@ public class ProcessingContentVerticle extends AbstractVerticle {
   private void handleContentHeaders(Message<JsonObject> tMessage) {
     JsonObject contentsObj = tMessage.body();
     JsonArray contents = new JsonArray();
+    String source;
     if (contentsObj.containsKey("contents")) {
       contents.addAll(contentsObj.getJsonArray("contents"));
     } else {
       contents.addAll(contentsObj.getJsonArray("data"));
     }
-//        JsonArray contents = contentsObj.getJsonArray("contents");
+
     logger.info("> PROCESSING HEADERS / CONTENTS SIZE: " + contents.size() + "\n\t\tFOR REPO: " + contentsObj.getString("key"));
 
     if (!contents.isEmpty()) {
@@ -91,10 +93,7 @@ public class ProcessingContentVerticle extends AbstractVerticle {
           .map(repoObj -> new JsonObject(repoObj.toString()))
           .filter(this::isExceptedFilenameExtension)
           .filter(this::isAllowedContentExtensions)
-          //                    .peek(this::peekContents)
-          .map(content -> fetchLocalHeaders(content)
-              .compose(this::fetchSourceHeaders)
-              .compose(this::checkContentInDb)
+          .map(content -> fetchLocalHeaders(content).compose(this::fetchSourceHeaders).compose(this::checkContentInDb)
               .compose(this::updateContentWithHeader)
 //                                            .setHandler(this::handleHeaders)
           )
@@ -175,7 +174,7 @@ public class ProcessingContentVerticle extends AbstractVerticle {
   private void handleHeaders(AsyncResult<JsonObject> asyncResult) {
     if (asyncResult.succeeded()) {
       if (Objects.nonNull(asyncResult.result())) {
-//                logger.info("HEADERS FOR REPO: " + asyncResult.result().getString("filesystem") + "\nSTORAGE: " + asyncResult.result().getString("filestorage"));
+        logger.info("HEADERS STORED: " + asyncResult.result().getString("filesystem") + "\nSTORAGE: " + asyncResult.result().getString("filestorage"));
       } else {
         logger.info("HEADERS FAILED /NULL");
       }
@@ -194,6 +193,7 @@ public class ProcessingContentVerticle extends AbstractVerticle {
     contentProcessingService.getLocalHeadersSync(content, res -> {
       if (res.succeeded()) {
         JsonObject contentWithLocalHeaders = res.result();
+        contentWithLocalHeaders.put("source",content.getString("source"));
         promise.complete(contentWithLocalHeaders);
       } else {
         logger.info("FETCHING LOCAL HEADERS FAILED: " + res.cause());
@@ -209,6 +209,7 @@ public class ProcessingContentVerticle extends AbstractVerticle {
       contentProcessingService.getSourceHeadersSync(content.getString("source"), content, res -> {
         if (res.succeeded()) {
           JsonObject contentWithLocalAndSourceHeaders = res.result();
+//          logger.info("HEADERS: " + contentWithLocalAndSourceHeaders.encodePrettily());
             promise.complete(contentWithLocalAndSourceHeaders);
         } else {
           logger.info("FETCHING SOURCE HEADERS FAILED: " + res.cause());
@@ -253,16 +254,21 @@ public class ProcessingContentVerticle extends AbstractVerticle {
   private Future<JsonObject> updateContentWithHeader(JsonObject contentWithLocalAndSourceHeaders) {
     Promise<JsonObject> promise = Promise.promise();
     if (Objects.nonNull(contentWithLocalAndSourceHeaders)) {
-//            contentMapper.save(new Content(contentWithLocalAndSourceHeaders), update -> {
-//                if(update.succeeded()) {
-//                    promise.complete(contentWithLocalAndSourceHeaders);
-//                } else {
-//                    logger.info("UPDATE CONTENT FAILED: " + update.cause());
-//                    promise.complete();
-//                }
-//            });
-      vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
-      promise.complete(contentWithLocalAndSourceHeaders);
+
+      Content content = new Content(contentWithLocalAndSourceHeaders);
+
+      // TODO if this is not-ok for repo like maven:remote:central then branch it to be send to SAVE_HEADERS topic
+
+      contentMapper.save(content, update -> {
+                if(update.succeeded()) {
+                    promise.complete(contentWithLocalAndSourceHeaders);
+                } else {
+                    logger.info("UPDATE CONTENT FAILED: " + update.cause());
+                    promise.complete();
+                }
+            });
+//      vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
+//      promise.complete(contentWithLocalAndSourceHeaders);
     } else {
 //      logger.info("CONTENT GET FAILURE /NULL");
       promise.complete();

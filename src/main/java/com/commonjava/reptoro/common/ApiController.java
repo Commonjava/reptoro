@@ -1,11 +1,15 @@
 package com.commonjava.reptoro.common;
 
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.oauth2.KeycloakHelper;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
@@ -20,11 +24,15 @@ import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
 
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+
 import java.util.logging.Logger;
 
 public class ApiController extends AbstractVerticle {
 
   Logger logger = Logger.getLogger(this.getClass().getName());
+
+  private OAuth2Auth oAuth2Auth;
 
 
   @Override
@@ -71,38 +79,60 @@ public class ApiController extends AbstractVerticle {
 
     JsonObject keycloakJson = new JsonObject()
       .put("realm", "pncredhat")
-      .put("auth-server-url","https://secure-sso-newcastle-stage.psi.redhat.com/auth")
+      .put("auth-server-url","https://secure-sso-newcastle-stage.psi.redhat.com/auth" )
+//      .put("auth-server-url","http://localhost:9080/auth") // local test
       .put("ssl-required", "none")
       .put("resource", "reptoro")
-      .put("public-client", true)
+//      .put("public-client", true)
       .put("confidential-port", 0)
+//      .put("credentials" , new JsonObject().put("secret","56cf0308-b957-4adc-a15a-8b4450f1c352")) // local test
       .put("credentials", new JsonObject().put("secret", "f599ca7d-9dfb-460e-9731-dc9b250fbf5d"))
       ;
 
-    OAuth2Auth oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
-    OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2Auth);
-    oAuth2AuthHandler.setupCallback(router.get("/callback"));
+    oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
 
-    // Configure the AuthHandler to process JWT's
-//    router.route("/greeting").handler(JWTAuthHandler.create(
-//      JWTAuth.create(vertx, new JWTAuthOptions()
-//        .addPubSecKey(new PubSecKeyOptions()
-//          .setAlgorithm("RS256")
-//          .setPublicKey(System.getenv("REALM_PUBLIC_KEY")))
-//        // since we're consuming keycloak JWTs we need to locate the permission claims in the token
-//        .setPermissionsClaimKey("realm_access/roles"))));
 
+    router.errorHandler(500, rc -> {
+      System.err.println("Handling failure");
+      Throwable failure = rc.failure();
+      if (failure != null) {
+        failure.printStackTrace();
+      }
+    });
+
+
+//    oAuth2Auth = OAuth2Auth.createKeycloak(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
+    OAuth2AuthHandler oAuth2AuthHandler1 =
+      OAuth2AuthHandler.create(
+        oAuth2Auth ,
+      "http://reptoro-newcastle-stage.cloud.paas.psi.redhat.com"
+      );
+    oAuth2AuthHandler1.setupCallback(router.get("/callback"));
+
+
+//    OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2Auth);
+//    oAuth2AuthHandler.setupCallback(router.get("/callback"));
+
+//    String hostURI = buildHostURI();
+//    router.route("/callback").handler(context -> authCallback(oAuth2Auth, hostURI, context));
 
     router.route("/*").handler(StaticHandler.create());
     router.route("/eventbus/*").handler(sockJSHandler);
-    router.route("/reptoro/*").handler(oAuth2AuthHandler);
 
+    router.route("/reptoro/*").handler(oAuth2AuthHandler1);
 
     router.route("/reptoro/user").handler(this::currentuser);
+    router.route("/reptoro/test").handler(this::handleTest);
 
     server.requestHandler(router).listen(8080);
 
 
+  }
+
+  private void handleTest(RoutingContext rc) {
+    rc.response()
+      .putHeader(CONTENT_TYPE, "application/json; charset=utf-8")
+      .end(new JsonObject().put("status","OK").encodePrettily());
   }
 
 
@@ -110,6 +140,34 @@ public class ApiController extends AbstractVerticle {
     String accessToken = KeycloakHelper.rawAccessToken(context.user().principal());
     JsonObject token = KeycloakHelper.parseToken(accessToken);
     context.response().end("User: " + token.getString("preferred_username"));
+  }
+
+  private String buildHostURI() {
+    return "http://reptoro-newcastle-stage.cloud.paas.psi.redhat.com";
+  }
+
+  private void authCallback(OAuth2Auth oauth2, String hostURL, RoutingContext context) {
+    final String code = context.request().getParam("code");
+    // code is a require value
+    if (code == null) {
+      context.fail(400);
+      return;
+    }
+    final String redirectTo = context.request().getParam("redirect_uri");
+    final String redirectURI = hostURL + context.currentRoute().getPath() + "?redirect_uri=" + redirectTo;
+    oauth2.getToken(new JsonObject().put("code", code).put("redirect_uri", redirectURI), ar -> {
+      if (ar.failed()) {
+        logger.info("Auth fail");
+        context.fail(ar.cause());
+      } else {
+        logger.info("Auth success");
+        context.setUser(ar.result());
+        context.response()
+          .putHeader("Location", redirectTo)
+          .setStatusCode(302)
+          .end();
+      }
+    });
   }
 
 }

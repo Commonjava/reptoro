@@ -65,6 +65,7 @@ public class Main {
             String message = res.getMessage();
 
             JsonObject vertxException = new JsonObject()
+                    .put("reason","vertx_exception")
                     .put("message", message)
                     .put("time", Instant.now());
             logger.info("==================\n" + vertxException.encodePrettily() + "\n=====================");
