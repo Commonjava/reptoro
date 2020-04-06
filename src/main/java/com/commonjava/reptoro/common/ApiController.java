@@ -85,8 +85,6 @@ public class ApiController extends AbstractVerticle {
       .put("resource", "reptoro")
 //      .put("public-client", true)
       .put("confidential-port", 0)
-//      .put("credentials" , new JsonObject().put("secret","56cf0308-b957-4adc-a15a-8b4450f1c352")) // local test
-      .put("credentials", new JsonObject().put("secret", "f599ca7d-9dfb-460e-9731-dc9b250fbf5d"))
       ;
 
     oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
