@@ -114,7 +114,12 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
             .collect(Collectors.toList())
 
         ).onComplete(res -> {
-          promise.complete(contentsAndRepo);
+          if(res.failed()) {
+            logger.info("COMPARING HEADERS FAILED: " + res.cause());
+          } else {
+            logger.info("CONTENT SIZE AFTER HEADERS COMPARE: " + res.result().size());
+            promise.complete(contentsAndRepo);
+          }
         });
       } else {
         // TODO empty contents list - send this repo for change protocol???
@@ -262,18 +267,20 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
 //          logger.info(contentWithLocalAndSourceHeaders.encodePrettily());
           Content content = Content.fromJson(contentWithLocalAndSourceHeaders);
 
-          // TODO if there is problem saving headers in db then send them to SAVE_HEADERS verticle...
-//      vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
-//      promise.complete(contentWithLocalAndSourceHeaders);
-          contentMapper.save(content, update -> {
-                if(update.succeeded()) {
+          if(content.getFilesystem().equalsIgnoreCase("maven:remote:central")) {
+            vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
+            promise.complete(contentWithLocalAndSourceHeaders);
+          } else {
+            contentMapper.save(content, update -> {
+              if(update.succeeded()) {
 //                  logger.info("\t\t\t\tUPDATED CONTENT COMPARE AT COMPARING CHECKSUMS: " + contentWithLocalAndSourceHeaders.getString("checksum"));
-                    promise.complete(contentWithLocalAndSourceHeaders);
-                } else {
-                    logger.info("\t\t\t\tUPDATE CONTENT COMPARE AT COMPARING CHECKSUMS FAILED: " + update.cause());
-                    promise.complete();
-                }
+                promise.complete(contentWithLocalAndSourceHeaders);
+              } else {
+                logger.info("\t\t\t\tUPDATE CONTENT COMPARE AT COMPARING CHECKSUMS FAILED: " + update.cause());
+                promise.complete();
+              }
             });
+          }
     } else {
       logger.info("CONTENT COMPARE GET FAILURE /NULL");
     }

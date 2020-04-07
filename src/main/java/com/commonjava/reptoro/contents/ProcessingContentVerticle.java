@@ -257,18 +257,19 @@ public class ProcessingContentVerticle extends AbstractVerticle {
 
       Content content = new Content(contentWithLocalAndSourceHeaders);
 
-      // TODO if this is not-ok for repo like maven:remote:central then branch it to be send to SAVE_HEADERS topic
-
-      contentMapper.save(content, update -> {
-                if(update.succeeded()) {
-                    promise.complete(contentWithLocalAndSourceHeaders);
-                } else {
-                    logger.info("UPDATE CONTENT FAILED: " + update.cause());
-                    promise.complete();
-                }
-            });
-//      vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
-//      promise.complete(contentWithLocalAndSourceHeaders);
+      if(content.getFilesystem().equalsIgnoreCase("maven:remote:central")) {
+        vertx.eventBus().send(Topics.SAVE_HEADERS, contentWithLocalAndSourceHeaders);
+        promise.complete(contentWithLocalAndSourceHeaders);
+      } else {
+        contentMapper.save(content, update -> {
+          if(update.succeeded()) {
+            promise.complete(contentWithLocalAndSourceHeaders);
+          } else {
+            logger.info("UPDATE CONTENT FAILED: " + update.cause());
+            promise.complete();
+          }
+        });
+      }
     } else {
 //      logger.info("CONTENT GET FAILURE /NULL");
       promise.complete();

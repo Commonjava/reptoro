@@ -55,6 +55,21 @@ public class ApiController extends AbstractVerticle {
     Router router = Router.router(vertx);
     SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
 
+    router.errorHandler(500, rc -> {
+      System.err.println("Handling failure");
+      Throwable failure = rc.failure();
+      if (failure != null) {
+        failure.printStackTrace();
+      }
+    });
+
+    router.errorHandler(401, rc -> {
+      System.err.println("Handling failure");
+      Throwable failure = rc.failure();
+      if (failure != null) {
+        failure.printStackTrace();
+      }
+    });
 
     sockJSHandler
       .bridge(
@@ -71,11 +86,24 @@ public class ApiController extends AbstractVerticle {
           .addInboundPermitted(new PermittedOptions().setAddress(Topics.CONTENT_HEADERS))
           .addOutboundPermitted(new PermittedOptions().setAddress(Topics.COMPARE_HEADERS))
           .addInboundPermitted(new PermittedOptions().setAddress(Topics.COMPARE_HEADERS))
-          .addOutboundPermitted(new PermittedOptions().setAddress(Topics.SHARED_IMPORTS_START))
-          .addInboundPermitted(new PermittedOptions().setAddress(Topics.SHARED_IMPORTS_START))
+          .addOutboundPermitted(new PermittedOptions().setAddress(Topics.SHARED_START))
+          .addInboundPermitted(new PermittedOptions().setAddress(Topics.SHARED_START))
           .addOutboundPermitted(new PermittedOptions().setAddress(Topics.PROCESS_SHAREDIMPORT_REPORT))
           .addInboundPermitted(new PermittedOptions().setAddress(Topics.PROCESS_SHAREDIMPORT_REPORT))
       );
+
+//    {
+//      "realm": "pncredhat",
+//      "auth-server-url": "https://secure-sso-newcastle-stage.psi.redhat.com/auth",
+//      "ssl-required": "none",
+//      "resource": "reptoro",
+//      "verify-token-audience": true,
+//      "credentials": {
+//          "secret": ""
+//      },
+//      "use-resource-role-mappings": true,
+//      "confidential-port": 0
+//    }
 
     JsonObject keycloakJson = new JsonObject()
       .put("realm", "pncredhat")
@@ -83,31 +111,27 @@ public class ApiController extends AbstractVerticle {
 //      .put("auth-server-url","http://localhost:9080/auth") // local test
       .put("ssl-required", "none")
       .put("resource", "reptoro")
+      .put("verify-token-audience",true)
+//      .put("allow-any-hostname",true)
+//      .put("disable-trust-manager",true)
+//      .put("bearer-only",true)
+      .put("use-resource-role-mappings",true)
 //      .put("public-client", true)
       .put("confidential-port", 0)
       .put("credentials", new JsonObject().put("secret", ""))
     ;
 
+
+
     oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
-
-
-    router.errorHandler(500, rc -> {
-      System.err.println("Handling failure");
-      Throwable failure = rc.failure();
-      if (failure != null) {
-        failure.printStackTrace();
-      }
-    });
-
 
 //    oAuth2Auth = OAuth2Auth.createKeycloak(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
     OAuth2AuthHandler oAuth2AuthHandler1 =
       OAuth2AuthHandler.create(
-        oAuth2Auth ,
-      "http://reptoro-newcastle-stage.cloud.paas.psi.redhat.com"
+        oAuth2Auth
+      ,"http://reptoro-newcastle-stage.cloud.paas.psi.redhat.com/callback"
       );
-    oAuth2AuthHandler1.setupCallback(router.get("/callback"));
-
+//    oAuth2AuthHandler1.setupCallback(router.get("/callback"));
 
 //    OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2Auth);
 //    oAuth2AuthHandler.setupCallback(router.get("/callback"));

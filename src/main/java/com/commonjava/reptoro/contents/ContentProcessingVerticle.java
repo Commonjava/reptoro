@@ -35,7 +35,7 @@ public class ContentProcessingVerticle extends AbstractVerticle {
             DeploymentOptions contentOptions = new DeploymentOptions().setWorker(true).setConfig(config());
             vertx.deployVerticle("com.commonjava.reptoro.contents.ProcessingContentVerticle",contentOptions , res -> {
                 if(res.succeeded()) {
-                    logger.info(">>> Processing Content Verticle Deployed!");
+                    logger.info(">>> Processing Content Verticle Deployed! ID: " + res.result());
                 } else {
                     logger.info(">>> Problem Deploying Content Processing Verticle: " + res.cause());
                 }
@@ -43,7 +43,7 @@ public class ContentProcessingVerticle extends AbstractVerticle {
             DeploymentOptions contentSaveOptions = new DeploymentOptions().setWorker(true).setInstances(10).setConfig(config());
             vertx.deployVerticle("com.commonjava.reptoro.contents.SaveContentVerticle",contentSaveOptions , res -> {
                 if(res.succeeded()) {
-                    logger.info(">>> Processing Save Content Verticle Deployed! " + res.result());
+                    logger.info(">>> Processing Save Content Verticle Deployed! ID:" + res.result());
                 } else {
                     logger.info(">>> Problem Deploying Content Processing Verticle: " + res.cause());
                 }

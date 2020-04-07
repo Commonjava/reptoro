@@ -161,6 +161,8 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
         JsonObject repo = tMessage.body();
         logger.info(repo.encodePrettily());
 
+        // TODO check and test different stage logic...
+
         switch (repo.getString("stage")) {
             case RepoStage.START:
                 getProxyRepoContents(repo)

@@ -10,7 +10,7 @@
     "browsedStoreApi": "/browse/maven/remote/",
     "contentStoreApi": "/content/maven/remote/",
     "sealedRecordsApi": "/folo/admin/report/ids/all",
-    "sealedRecordReportApi": "/folo/admin/",
+    "sealedRecordRaportApi": "/folo/admin/",
     "browseSharedImportsApi": "/browse/maven/hosted/shared-imports"
   },
   "cassandra": {

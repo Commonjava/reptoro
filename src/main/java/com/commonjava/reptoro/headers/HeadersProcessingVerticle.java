@@ -23,7 +23,7 @@ public class HeadersProcessingVerticle extends AbstractVerticle {
             DeploymentOptions headersOptions = new DeploymentOptions().setWorker(true).setInstances(1).setConfig(config());
             vertx.deployVerticle("com.commonjava.reptoro.headers.ProcessingHeadersVerticle",headersOptions , res -> {
                 if(res.succeeded()) {
-                    logger.info(">>> Processing Headers Verticle Deployed!");
+                    logger.info(">>> Processing Headers Verticle Deployed! ID: " + res.result());
                 } else {
                     logger.info(">>> Problem Deploying Headers Processing Verticle: " + res.cause());
                 }

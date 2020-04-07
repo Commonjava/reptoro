@@ -22,5 +22,9 @@
       <source>${project.basedir}/src/main/docker/RH-IT-Root-CA.crt</source>
       <outputDirectory>/</outputDirectory>
     </file>
+    <file>
+      <source>${project.basedir}/src/main/docker/paas_psi_redhat_com.crt</source>
+      <outputDirectory>/</outputDirectory>
+    </file>
   </files>
 </assembly>

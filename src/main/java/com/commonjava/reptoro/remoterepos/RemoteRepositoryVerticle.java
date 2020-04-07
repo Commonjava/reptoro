@@ -40,7 +40,7 @@ public class RemoteRepositoryVerticle extends AbstractVerticle {
             DeploymentOptions repositoryOptions = new DeploymentOptions().setWorker(true).setConfig(config());
             vertx.deployVerticle("com.commonjava.reptoro.remoterepos.ProcessingRepositoriesVerticle",repositoryOptions , res -> {
                 if(res.succeeded()) {
-                    logger.info(">>> Processing Repo Verticle Deployed!");
+                    logger.info(">>> Processing Repo Verticle Deployed! ID: " + res.result());
                 } else {
                     logger.info(">>> Problem Deploying Repo Processing Verticle: " + res.cause());
                 }

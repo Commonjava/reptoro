@@ -1,7 +1,8 @@
 package com.commonjava.reptoro.sharedimports;
 
-import io.vertx.cassandra.CassandraClient;
-import io.vertx.cassandra.CassandraClientOptions;
+import com.commonjava.reptoro.common.RepoStage;
+import com.datastax.driver.core.Row;
+import io.vertx.cassandra.*;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -9,9 +10,8 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -42,6 +42,7 @@ public class SharedImportsServiceImpl implements SharedImportsService {
   private JsonObject config;
 
   private CassandraClient cassandraReptoroClient;
+  private Mapper<SharedImport> sharedImportMapper;
 
   private String indyHost;
   private Integer indyPort;
@@ -97,6 +98,8 @@ public class SharedImportsServiceImpl implements SharedImportsService {
       .withCredentials(user, pass)
       .addContactPoint(cassandraHostname);
     this.cassandraReptoroClient = CassandraClient.create(vertx,cassandraClientOptions);
+    MappingManager mappingManagerRepos = MappingManager.create(this.cassandraReptoroClient);
+    this.sharedImportMapper = mappingManagerRepos.mapper(SharedImport.class);
 
   }
 
@@ -120,6 +123,7 @@ public class SharedImportsServiceImpl implements SharedImportsService {
     client
       .get(indyPort,indyHost,this.indyApi + this.sealedRecordsApi)
       .followRedirects(true)
+      .timeout(TimeUnit.SECONDS.toMillis(60))
 //      .basicAuthentication(indyUser, indyPass)
       .send(res -> {
         if (res.failed()) {
@@ -136,10 +140,56 @@ public class SharedImportsServiceImpl implements SharedImportsService {
   }
 
   @Override
+  public void getOneSealedRecord(Handler<AsyncResult<JsonObject>> handler) {
+    String query = "SELECT * FROM reptoro.sharedimports;";
+
+    cassandraReptoroClient.execute(query,res -> {
+      if(res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        ResultSet result = res.result();
+        result.all(repos -> {
+          List<Row> results = repos.result();
+          JsonObject repoResult = new JsonObject();
+
+          for(Row row : results) {
+            String id = row.getString("id");
+            String storeKey = row.getString("storekey");
+            String accessChannel = row.getString("accesschannel");
+            String path = row.getString("path");
+            String originUrl = row.getString("originurl");
+            String localUrl = row.getString("localurl");
+            String md5 = row.getString("md5");
+            String sha256 = row.getString("sha256");
+            String sha1 = row.getString("sha1");
+            boolean compared = row.getBool("compared");
+            if(!compared && originUrl.isEmpty() && localUrl.isEmpty()) {
+              repoResult
+                .put("id",id)
+                .put("storekey",storeKey)
+                .put("accesschannel",accessChannel)
+                .put("path",path)
+                .put("originurl",originUrl)
+                .put("localurl",localUrl)
+                .put("md5",md5)
+                .put("sha256",sha256)
+                .put("sha1",sha1)
+                .put("compared",compared);
+              handler.handle(Future.succeededFuture(repoResult));
+            }
+          }
+        });
+      }
+    });
+  }
+
+  @Override
   public void getSealedRecordRaport(String buildId, Handler<AsyncResult<JsonObject>> handler) {
+    logger.info("RECORD URL: http://" +indyHost+":"+indyPort+indyApi+sealedRecordReportApi+buildId+"/report" );
     client
-      .get(indyPort,indyHost,this.indyApi + this.sealedRecordReportApi + buildId + "/report")
+      .get(this.indyPort,this.indyHost,this.indyApi + this.sealedRecordReportApi + buildId + "/report")
       .followRedirects(true)
+      .timeout(TimeUnit.SECONDS.toMillis(60))
 //      .basicAuthentication(indyUser, indyPass)
       .send(res -> {
         if (res.failed()) {
@@ -156,10 +206,44 @@ public class SharedImportsServiceImpl implements SharedImportsService {
   }
 
   @Override
+  public void checkSharedImportInDb(String buildId, Handler<AsyncResult<JsonObject>> handler) {
+    String query = "SELECT id FROM reptoro.sharedimports WHERE id='" + buildId + "' allow filtering;";
+
+      cassandraReptoroClient.execute(query , res -> {
+      if(res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        ResultSet result = res.result();
+        JsonObject sharedImportJson = new JsonObject();
+        result.one(sharedImport -> {
+          if(sharedImport.succeeded()) {
+
+            Row result1 = sharedImport.result();
+            if(Objects.isNull(result1)) {
+              handler.handle(Future.succeededFuture(sharedImportJson.put("id","")));
+            } else {
+              String sharedImportId = result1.getString("id");
+              if(Objects.nonNull(sharedImportId) || sharedImportId.equalsIgnoreCase("")) {
+                sharedImportJson.put("id",result1.getString("id"));
+                handler.handle(Future.succeededFuture(sharedImportJson));
+              } else {
+                handler.handle(Future.succeededFuture(sharedImportJson.put("id","")));
+              }
+            }
+          } else {
+            handler.handle(Future.failedFuture(sharedImport.cause()));
+          }
+        });
+      }
+    });
+  }
+
+  @Override
   public void getSharedImportContent(String path, Handler<AsyncResult<JsonObject>> handler) {
     client
       .get(indyPort,indyHost,this.indyApi + this.browseSharedImportsApi + path)
       .followRedirects(true)
+      .timeout(TimeUnit.SECONDS.toMillis(60))
 //      .basicAuthentication(indyUser, indyPass)
       .send(res -> {
         if (res.failed()) {
@@ -198,6 +282,18 @@ public class SharedImportsServiceImpl implements SharedImportsService {
           }
         }
       });
+  }
+
+  @Override
+  public void deleteSharedImportBuildId(String buildId, Handler<AsyncResult<JsonObject>> handler) {
+    String query = "DELETE FROM reptoro.sharedimports WHERE id='" + buildId + "' AND storekey='' AND path=''";
+    cassandraReptoroClient.execute(query , res -> {
+      if(res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        handler.handle(Future.succeededFuture(new JsonObject().put("operation","ok")));
+      }
+    });
   }
 
 

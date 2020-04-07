@@ -16,9 +16,15 @@ public interface SharedImportsService {
 
   void getAllSealedTrackingRecords(Handler<AsyncResult<JsonObject>> handler);
 
+  void getOneSealedRecord(Handler<AsyncResult<JsonObject>> handler);
+
   void getSealedRecordRaport(String buildId, Handler<AsyncResult<JsonObject>> handler);
 
+  void checkSharedImportInDb(String buildId, Handler<AsyncResult<JsonObject>> handler);
+
   void getSharedImportContent(String path , Handler<AsyncResult<JsonObject>> handler);
+
+  void deleteSharedImportBuildId(String buildId , Handler<AsyncResult<JsonObject>> handler);
 
   @GenIgnore
   static SharedImportsService createProxy(Vertx vertx, String address) {

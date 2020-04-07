@@ -1,5 +1,6 @@
 package com.commonjava.reptoro.sharedimports;
 
+import com.commonjava.reptoro.common.Const;
 import com.commonjava.reptoro.common.Topics;
 import com.commonjava.reptoro.remoterepos.RemoteRepositoryService;
 import com.commonjava.reptoro.remoterepos.RemoteRepositoryServiceImpl;
@@ -35,7 +36,7 @@ public class SharedImportsVerticle extends AbstractVerticle {
 
       MessageConsumer<JsonObject> service =
         new ServiceBinder(vertx)
-          .setAddress("shared.imports.service")
+          .setAddress(Const.SHARED_IMPORTS_SERVICE)
           .setTimeoutSeconds(TimeUnit.SECONDS.toMillis(60))
 //                    .addInterceptor(msg -> {  })
           .register(SharedImportsService.class, sharedImportsService);
@@ -46,16 +47,16 @@ public class SharedImportsVerticle extends AbstractVerticle {
         DeploymentOptions sharedImportOptions = new DeploymentOptions().setWorker(true).setConfig(config());
         vertx.deployVerticle("com.commonjava.reptoro.sharedimports.ProcessingSharedImportsVerticle",sharedImportOptions , res -> {
           if(res.succeeded()) {
-            logger.info(">>> Processing Shared Imports Verticle Deployed!");
+            logger.info(">>> Processing Shared Imports Verticle Deployed! ID: "+ res.result());
           } else {
             logger.info(">>> Problem Deploying Shared Imports Processing Verticle: " + res.cause());
           }
         });
 
         DeploymentOptions comparingImportsOptions = new DeploymentOptions().setInstances(10).setWorker(true).setConfig(config());
-        vertx.deployVerticle("",comparingImportsOptions , res -> {
+        vertx.deployVerticle("com.commonjava.reptoro.sharedimports.ComparingSharedImportsVerticle",comparingImportsOptions , res -> {
           if(res.succeeded()) {
-            logger.info(">>> Comparing Shared Imports Verticle Deployed!");
+            logger.info(">>> Comparing Shared Imports Verticle Deployed! ID: " + res.result());
           } else {
             logger.info(">>> Problem Deploying Comparing Shared Imports Verticle: " + res.cause());
           }

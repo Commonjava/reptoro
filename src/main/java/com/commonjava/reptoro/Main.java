@@ -153,9 +153,14 @@ public class Main {
 
 
                 // TEST START REMOTE MAVEN REPOS...
-                vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
-                    eb.send(Topics.REPO_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
-                });
+//                vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
+//                    eb.send(Topics.REPO_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
+//                });
+
+              // TEST START SHARED IMPORTS PROCESS...
+              vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
+                eb.send(Topics.SHARED_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
+              });
 
             }
         });

@@ -122,13 +122,27 @@ public class SharedImportsServiceVertxProxyHandler extends ProxyHandler {
           service.getAllSealedTrackingRecords(HelperUtils.createHandler(msg));
           break;
         }
+        case "getOneSealedRecord": {
+          service.getOneSealedRecord(HelperUtils.createHandler(msg));
+          break;
+        }
         case "getSealedRecordRaport": {
           service.getSealedRecordRaport((java.lang.String)json.getValue("buildId"),
                         HelperUtils.createHandler(msg));
           break;
         }
+        case "checkSharedImportInDb": {
+          service.checkSharedImportInDb((java.lang.String)json.getValue("buildId"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
         case "getSharedImportContent": {
           service.getSharedImportContent((java.lang.String)json.getValue("path"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
+        case "deleteSharedImportBuildId": {
+          service.deleteSharedImportBuildId((java.lang.String)json.getValue("buildId"),
                         HelperUtils.createHandler(msg));
           break;
         }

@@ -60,14 +60,15 @@ public class SharedImport {
 
   public SharedImport(JsonObject sharedImportReport) {
     this.id = sharedImportReport.getString("id");
-    this.storeKey = sharedImportReport.getString("storeKey");
-    this.accessChannel = sharedImportReport.getString("accessChannel");
-    this.path = sharedImportReport.getString("path");
-    this.originUrl = sharedImportReport.getString("originUrl");
-    this.localUrl = sharedImportReport.getString("localUrl");
-    this.md5 = sharedImportReport.getString("md5");
-    this.sha256 = sharedImportReport.getString("sha256");
-    this.sha1 = sharedImportReport.getString("sha1");
+    this.storeKey = sharedImportReport.containsKey("storeKey") ? sharedImportReport.getString("storeKey") : "";
+    this.accessChannel = sharedImportReport.containsKey("accessChannel") ? sharedImportReport.getString("accessChannel") : "";
+    this.path = sharedImportReport.containsKey("path") ? sharedImportReport.getString("path") : "";
+    this.originUrl = sharedImportReport.containsKey("originUrl") ? sharedImportReport.getString("originUrl") : "";
+    this.localUrl = sharedImportReport.containsKey("localUrl") ? sharedImportReport.getString("localUrl") : "";
+    this.md5 = sharedImportReport.containsKey("md5") ? sharedImportReport.getString("md5") : "";
+    this.sha256 = sharedImportReport.containsKey("sha256") ? sharedImportReport.getString("sha256") : "";
+    this.sha1 = sharedImportReport.containsKey("sha1") ? sharedImportReport.getString("sha1") : "";
+    this.compared = sharedImportReport.containsKey("compared") ? sharedImportReport.getBoolean("compared") : false;
   }
 
   public JsonObject toJson(SharedImport sharedImport) {
@@ -81,6 +82,7 @@ public class SharedImport {
       .put("md5" , sharedImport.getMd5())
       .put("sha256" , sharedImport.getSha256())
       .put("sha1" , sharedImport.getSha1())
+      .put("compared",sharedImport.getCompared())
       ;
   }
 

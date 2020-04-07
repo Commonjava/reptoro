@@ -13,9 +13,12 @@ public class Topics {
     public static final String SAVE_CONTENT = "content.save";
     public static final String SAVE_HEADERS = "headers.save";
 
-    public static final String SHARED_IMPORTS_START = "shared.imports.start";
+    public static final String SHARED_FETCH = "shared.imports.fetch.all";
+    public static final String SHARED_GET_ONE = "shared.imports.get.one";
+    public static final String SHARED_START = "shared.imports.start";
     public static final String PROCESS_SHAREDIMPORT_REPORT = "shared.import.process";
     public static final String SHARED_IMPORTS_BAD_PATH = "shared.import.path.notmatch";
+    public static final String SHARED_COMPARE_HEADERS = "shared.import.compare.headers";
 
 
 
