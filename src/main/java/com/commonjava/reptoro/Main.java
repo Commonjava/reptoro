@@ -158,9 +158,9 @@ public class Main {
 //                });
 
               // TEST START SHARED IMPORTS PROCESS...
-              vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
-                eb.send(Topics.SHARED_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
-              });
+//              vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
+//                eb.send(Topics.SHARED_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
+//              });
 
             }
         });

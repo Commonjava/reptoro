@@ -5,6 +5,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
@@ -92,52 +93,31 @@ public class ApiController extends AbstractVerticle {
           .addInboundPermitted(new PermittedOptions().setAddress(Topics.PROCESS_SHAREDIMPORT_REPORT))
       );
 
-//    {
-//      "realm": "pncredhat",
-//      "auth-server-url": "https://secure-sso-newcastle-stage.psi.redhat.com/auth",
-//      "ssl-required": "none",
-//      "resource": "reptoro",
-//      "verify-token-audience": true,
-//      "credentials": {
-//          "secret": ""
-//      },
-//      "use-resource-role-mappings": true,
-//      "confidential-port": 0
-//    }
-
     JsonObject keycloakJson = new JsonObject()
       .put("realm", "pncredhat")
       .put("auth-server-url","https://secure-sso-newcastle-stage.psi.redhat.com/auth" )
-//      .put("auth-server-url","http://localhost:9080/auth") // local test
       .put("ssl-required", "none")
       .put("resource", "reptoro")
       .put("verify-token-audience",true)
-//      .put("allow-any-hostname",true)
-//      .put("disable-trust-manager",true)
-//      .put("bearer-only",true)
       .put("use-resource-role-mappings",true)
-//      .put("public-client", true)
       .put("confidential-port", 0)
       .put("credentials", new JsonObject().put("secret", ""))
     ;
 
 
+    HttpClientOptions options = new HttpClientOptions()
+      .setSsl(true)
+      .setVerifyHost(false)
+      .setTrustAll(true);
 
-    oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
+    oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson,options);
 
-//    oAuth2Auth = OAuth2Auth.createKeycloak(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson);
     OAuth2AuthHandler oAuth2AuthHandler1 =
       OAuth2AuthHandler.create(
         oAuth2Auth
-      ,"http://reptoro-newcastle-stage.cloud.paas.psi.redhat.com/callback"
+      ,"http://reptoro-newcastle-stage.cloud.paas.psi.redhat.com"
       );
-//    oAuth2AuthHandler1.setupCallback(router.get("/callback"));
-
-//    OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2Auth);
-//    oAuth2AuthHandler.setupCallback(router.get("/callback"));
-
-//    String hostURI = buildHostURI();
-//    router.route("/callback").handler(context -> authCallback(oAuth2Auth, hostURI, context));
+    oAuth2AuthHandler1.setupCallback(router.get("/callback"));
 
     router.route("/*").handler(StaticHandler.create());
     router.route("/eventbus/*").handler(sockJSHandler);

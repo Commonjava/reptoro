@@ -86,6 +86,7 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
       CompositeFuture.join(
         downloads.stream()
           .map(download -> new JsonObject(download.toString()))
+          .filter(download -> !download.getString("accessChannel").equalsIgnoreCase("GENERIC_PROXY"))
           .filter(this::filterSslProtocols)
           .filter(this::isExceptedFilenameExtension)
           .filter(this::isAllowedContentExtensions)

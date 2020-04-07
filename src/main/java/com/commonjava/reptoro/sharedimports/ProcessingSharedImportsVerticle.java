@@ -189,6 +189,16 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
           vertx.eventBus().send(Topics.PROCESS_SHAREDIMPORT_REPORT , report);
         } else {
           logger.info("THIS SHARED IMPORT RAPORT DOESN'T HAVE DOWNLOADS: " + report.getJsonObject("key"));
+          // TODO RESTART GET_ONE PROCESS...
+          vertx.eventBus().send(Topics.SHARED_GET_ONE , new JsonObject().put("type","sealed"));
+          sharedImportsService.deleteSharedImportBuildId(sharedImport.getString("id") , id -> {
+//          sharedImportMapper.delete(Collections.singletonList(sharedImport.getString("id")),id -> {
+            if(id.failed()) {
+              logger.info("SHARED IMPORT BUILD ID FIELD IS NOT DELETED! " + id.cause());
+            } else {
+              logger.info("SHARED IMPORT BUILD ID FIELD DELETED!");
+            }
+          });
         }
       }
     });
