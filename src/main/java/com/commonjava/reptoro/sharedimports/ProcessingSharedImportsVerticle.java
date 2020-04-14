@@ -11,6 +11,7 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -64,9 +65,10 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
 
   private void handleSharedImportsFetchAll(Message<JsonObject> jsonObjectMessage) {
     JsonObject cmd = jsonObjectMessage.body();
-    logger.info("RECIVED START SHARED IMPORTS MSG: \n" + cmd.encodePrettily());
+    logger.info("RECEIVED START VALIDATE SHARED IMPORTS| COMMAND: \n" + cmd.encodePrettily());
     // TODO different commands and different sealed records, maybe?
 
+    logger.info("==============<FETCHING SEALED SHARED IMPORTS FROM INDY>================");
     // get all sealed records ID's
     sharedImportsService.getAllSealedTrackingRecords(res -> {
       if(res.failed()) {
@@ -104,17 +106,20 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
 
       sharedImportsService.getOneSealedRecord(res -> {
         if(res.failed()) {
-          logger.info("FETCHING ONE SHARED IMPORT FROM DB FAILED: " + res.cause());
+          JsonObject dbCause =
+            new JsonObject()
+            .put("cause", res.cause().getMessage())
+            .put("timestamp", Instant.now());
+          logger.info(dbCause.encodePrettily());
         } else {
           JsonObject sharedImport = res.result();
-
-          vertx.eventBus().send(Topics.SHARED_START , sharedImport);
           sharedImportsService.deleteSharedImportBuildId(sharedImport.getString("id") , id -> {
 //          sharedImportMapper.delete(Collections.singletonList(sharedImport.getString("id")),id -> {
             if(id.failed()) {
-              logger.info("SHARED IMPORT BUILD ID FIELD IS NOT DELETED! " + id.cause());
+              logger.info("SHARED IMPORT MARKER BUILD-ID FIELD IS NOT DELETED! " + id.cause());
             } else {
-              logger.info("SHARED IMPORT BUILD ID FIELD DELETED!");
+              vertx.eventBus().send(Topics.SHARED_START , sharedImport);
+              logger.info("SHARED IMPORT MARKER BUILD-ID FIELD DELETED!");
             }
           });
         }
@@ -179,6 +184,9 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
   private void handleProcessingSharedImports(Message<JsonObject> jsonObjectMessage) {
     JsonObject sharedImport = jsonObjectMessage.body();
 
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,sharedImport);
+
     // get sealed record report with downloads json array
     sharedImportsService.getSealedRecordRaport(sharedImport.getString("id") , res -> {
       if(res.failed()) {
@@ -189,22 +197,42 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
           vertx.eventBus().send(Topics.PROCESS_SHAREDIMPORT_REPORT , report);
         } else {
           logger.info("THIS SHARED IMPORT RAPORT DOESN'T HAVE DOWNLOADS: " + report.getJsonObject("key"));
-          // TODO RESTART GET_ONE PROCESS...
-          vertx.eventBus().send(Topics.SHARED_GET_ONE , new JsonObject().put("type","sealed"));
-          sharedImportsService.deleteSharedImportBuildId(sharedImport.getString("id") , id -> {
-//          sharedImportMapper.delete(Collections.singletonList(sharedImport.getString("id")),id -> {
-            if(id.failed()) {
-              logger.info("SHARED IMPORT BUILD ID FIELD IS NOT DELETED! " + id.cause());
-            } else {
-              logger.info("SHARED IMPORT BUILD ID FIELD DELETED!");
-            }
-          });
+          // TODO maybe just update this shared import without downloads in db??! ...
+          // change "complete" to true
+
+          sharedImport.put("compared",true);
+          updateSharedImportWithoutDownloads(sharedImport)
+            .onComplete(complete -> {
+              vertx.eventBus().send(Topics.SHARED_GET_ONE , new JsonObject().put("type","sealed"));
+            });
+
+//          sharedImportsService.deleteSharedImportBuildId(sharedImport.getString("id") , id -> {
+//            if(id.failed()) {
+//              logger.info("SHARED IMPORT MARKER BUILD-ID ROW NOT DELETED: " + id.cause());
+//            } else {
+//              vertx.eventBus().send(Topics.SHARED_GET_ONE , new JsonObject().put("type","sealed"));
+//              logger.info("SHARED IMPORT [without downloads] MARKER BUILD-ID ROW DELETED!");
+//            }
+//          });
         }
       }
     });
   }
 
 
+  private Future<JsonObject> updateSharedImportWithoutDownloads(JsonObject sharedImport) {
+    Promise<JsonObject> promise = Promise.promise();
+    SharedImport sharedImport1 = new SharedImport(sharedImport);
+    sharedImportMapper.save(sharedImport1 , res -> {
+      if(res.failed()) {
+        logger.info("FAILED UPDATING SHARED IMPORT [without downloads] IN DB: " + res.cause());
+        promise.complete();
+      } else {
+        promise.complete(sharedImport);
+      }
+    });
+    return promise.future();
+  }
 
   private Future<Void> publishRecord(JsonObject report) {
     Promise<Void> promise = Promise.promise();

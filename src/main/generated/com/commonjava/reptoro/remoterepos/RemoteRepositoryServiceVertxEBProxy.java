@@ -33,6 +33,7 @@ import io.vertx.serviceproxy.ServiceException;
 import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
 import io.vertx.serviceproxy.ProxyUtils;
 
+import io.vertx.core.json.JsonArray;
 import java.util.List;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
@@ -240,6 +241,24 @@ public class RemoteRepositoryServiceVertxEBProxy implements RemoteRepositoryServ
     DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
     _deliveryOptions.addHeader("action", "updateNewRemoteRepositories");
     _vertx.eventBus().<JsonObject>request(_address, _json, _deliveryOptions, res -> {
+      if (res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        handler.handle(Future.succeededFuture(res.result().body()));
+      }
+    });
+  }
+  @Override
+  public  void getAllRemoteRepositoriesFromDb(Handler<AsyncResult<JsonArray>> handler){
+    if (closed) {
+      handler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
+      return;
+    }
+    JsonObject _json = new JsonObject();
+
+    DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
+    _deliveryOptions.addHeader("action", "getAllRemoteRepositoriesFromDb");
+    _vertx.eventBus().<JsonArray>request(_address, _json, _deliveryOptions, res -> {
       if (res.failed()) {
         handler.handle(Future.failedFuture(res.cause()));
       } else {

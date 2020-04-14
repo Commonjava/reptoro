@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="ReptoroApp">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Vert.x Microservice Blueprint - Online shopping SPA">
+  <meta name="author" content="sczyh30">
+
+  <title>Reptoro</title>
+
+  <!-- webpack bundled css -->
+  <link rel="stylesheet" href="./css/patternfly.min.css">
+  <link rel="stylesheet" href="./css/patternfly-additions.min.css">
+
+  <!-- webpack bundled dependencies -->
+  <script src="./js/main.bundle.js"></script>
+
+  <!-- c3.js d3.js bundled dependencies -->
+  <script src="./js/charts.bundle.js"></script>
+
+  <!-- Vert.x EventBus js dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vertx/3.8.2/vertx-eventbus.min.js"></script>
+
+
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.9/angular.min.js"></script> -->
+
+
+  <!-- AngularJS-Patternfly Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.4/js/patternfly.min.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/jquery.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/bootstrap.min.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/bootstrap-select.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/jquery-ui.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/jquery.dataTables.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/dataTables.select.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/moment.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/d3.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/c3.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/patternfly-settings.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/patternfly-settings-colors.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/patternfly-settings-charts.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-dragdrop.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-datatables.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-datatables.select.min.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-sanitize.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-animate.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/ui-bootstrap-tpls.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-bootstrap-prettify.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/lodash.min.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-patternfly.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-ui-router.min.js"></script>
+  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-drag-and-drop-lists.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-route/1.7.9/angular-route.min.js"></script>
+
+  <script src="./js/app.js"></script>
+  <script src="./js/controller.js"></script>
+</head>
+
+<body class="cards-pf">
+
+  <!-- nav -->
+  <nav class="navbar navbar-default navbar-pf" role="navigation" ng-controller="HeaderCtrl">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">
+        <img src="img/brand.svg" alt="Reptoro App" />
+      </a>
+    </div>
+    <div class="collapse navbar-collapse navbar-collapse-1">
+      <ul class="nav navbar-nav navbar-utility">
+        <li>
+          <a href="#">User:</a>
+        </li>
+        <li ng-if="user.id != undefined">
+          <span class="welcome-tag">
+              <span><a href="#!user">{{ user.username | uppercase }}</a></span>
+          </span>
+        </li>
+        <li ng-if="user.id == undefined"><a ng-href="/login">Login</a></li>
+        <li ng-if="user.id != undefined"><a ng-click="logout()" href="#">Logout</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-primary">
+        <li class="active">
+          <a href="#!remoterepos">Remote Repositories Validation</a>
+        </li>
+        <li>
+          <a href="#!sharedimports">Shared Imports Validation</a>
+        </li> 
+      </ul>
+    </div>
+  </nav><!-- end nav -->
+
+  <div class="container-fluid">
+    <div ng-view></div>
+  </div><!-- container -->
+
+  <script>
+    // Row Checkbox Selection
+    $(document).ready(function () {
+      $("input[type='checkbox']").change(function (e) {
+        if ($(this).is(":checked")) {
+          $(this).closest('.list-group-item').addClass("active");
+        } else {
+          $(this).closest('.list-group-item').removeClass("active");
+        }
+      });
+
+      // Row navigation to contents/details page
+      $(".list-group-item").click(function (e) {
+        var target = e.target;
+        //check if clicked element is a div, and not <a>, button or input
+        if ($(target).is('div')) {
+          window.location = $(this).data("link");
+        }
+      });
+    });
+
+  </script>
+</body>
+</html>

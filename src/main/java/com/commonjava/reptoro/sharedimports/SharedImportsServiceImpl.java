@@ -1,37 +1,33 @@
 package com.commonjava.reptoro.sharedimports;
 
-import com.commonjava.reptoro.common.RepoStage;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryExecutionException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
+import com.sun.org.apache.xalan.internal.xsltc.dom.NthIterator;
 import io.vertx.cassandra.*;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import org.HdrHistogram.AtomicHistogram;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * "id" -> "build_perftest-atlas-20200228T215436"
- *
- * "storeKey": "maven:remote:central",
- * "accessChannel": "NATIVE",
- * "path": "/com/fasterxml/jackson/core/jackson-annotations/2.9.7/jackson-annotations-2.9.7.jar",
- * "originUrl": "http://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.9.7/jackson-annotations-2.9.7.jar",
- * "localUrl": "http://indy-admin-stage.psi.redhat.com/api/content/maven/remote/central/com/fasterxml/jackson/core/jackson-annotations/2.9.7/jackson-annotations-2.9.7.jar",
- * "md5": "016df80972ff1f747768d46e3b933893",
- * "sha256": "8bf8c224e9205f77a0e239e96e473bdb263772db4ab85ecd1810e14c04132c5e",
- * "sha1": "4b838e5c4fc17ac02f3293e9a558bb781a51c46d",
- * "size": 66981,
- * "timestamps": [
- * 1582927113514
- * ]
- *
- *
- */
+import static com.commonjava.reptoro.sharedimports.SharedImport.toSiJson;
+
+
 public class SharedImportsServiceImpl implements SharedImportsService {
 
 
@@ -41,6 +37,7 @@ public class SharedImportsServiceImpl implements SharedImportsService {
   private WebClient client;
   private JsonObject config;
 
+  private Session sharedImportsSession;
   private CassandraClient cassandraReptoroClient;
   private Mapper<SharedImport> sharedImportMapper;
 
@@ -55,8 +52,12 @@ public class SharedImportsServiceImpl implements SharedImportsService {
   private String sealedRecordReportApi;
   private String browseSharedImportsApi;
 
-  private final String CREATE_REPTORO_IMPORTS_TABLE = "CREATE TABLE IF NOT EXISTS reptoro.sharedimports(ID text,STOREKEY text,ACCESSCHANNEL text,PATH text,ORIGINURL text,LOCALURL text,MD5 text,SHA256 text,SHA1 text,COMPARED boolean,PRIMARY KEY((ID,STOREKEY),PATH));";
 
+
+  private final String CREATE_REPTORO_IMPORTS_TABLE =
+    "CREATE TABLE IF NOT EXISTS reptoro.sharedimports(ID text,STOREKEY text,ACCESSCHANNEL text,PATH text,ORIGINURL text,LOCALURL text,MD5 text,SHA256 text,SHA1 text,COMPARED boolean,PATHMATCH boolean,SOURCEHEADERS text,CHECKSUM boolean,PRIMARY KEY((ID,STOREKEY),PATH));";
+
+  private final String GET_ALL_SHARED_IMPORTS = "SELECT * FROM reptoro.sharedimports";
 
   public SharedImportsServiceImpl() {}
 
@@ -90,6 +91,14 @@ public class SharedImportsServiceImpl implements SharedImportsService {
     String cassandraHostname = cassandraConfig.getString("hostname");
     String reptoroKeyspace = reptoroCassandraConfig.getString("keyspace");
     String reptoroTablename = reptoroCassandraConfig.getString("tablename");
+
+    Cluster build = cassandraClientOptions
+      .dataStaxClusterBuilder()
+      .withPort(port)
+      .withCredentials(user, pass)
+      .addContactPoint(cassandraHostname)
+      .build();
+    this.sharedImportsSession = build.connect(reptoroKeyspace);
 
     cassandraClientOptions
       .setKeyspace(reptoroKeyspace)
@@ -152,6 +161,10 @@ public class SharedImportsServiceImpl implements SharedImportsService {
           List<Row> results = repos.result();
           JsonObject repoResult = new JsonObject();
 
+          if(result.isExhausted() && result.isFullyFetched()) {
+            handler.handle(Future.failedFuture("All records have bean processed!"));
+          }
+
           for(Row row : results) {
             String id = row.getString("id");
             String storeKey = row.getString("storekey");
@@ -163,6 +176,9 @@ public class SharedImportsServiceImpl implements SharedImportsService {
             String sha256 = row.getString("sha256");
             String sha1 = row.getString("sha1");
             boolean compared = row.getBool("compared");
+            boolean checksum = row.getBool("checksum");
+            boolean pathmatch = row.getBool("pathmatch");
+            String sourceheaders = row.getString("sourceheaders");
             if(!compared && originUrl.isEmpty() && localUrl.isEmpty()) {
               repoResult
                 .put("id",id)
@@ -174,13 +190,56 @@ public class SharedImportsServiceImpl implements SharedImportsService {
                 .put("md5",md5)
                 .put("sha256",sha256)
                 .put("sha1",sha1)
-                .put("compared",compared);
+                .put("compared",compared)
+                .put("checksum",checksum)
+                .put("pathmatch",pathmatch)
+                .put("sourceheaders",sourceheaders)
+              ;
               handler.handle(Future.succeededFuture(repoResult));
             }
           }
         });
       }
     });
+  }
+
+
+  //  {"results":[
+//    [{sharedImport},{sharedImport},{sharedImport}], <- sharedImportsArray of buildId's
+//    [{sharedImport},{sharedImport},{sharedImport}]  <- sharedImportsArray of buildId's
+//  ]}
+  @Override
+  public void getAllSharedImportsFromDb(Handler<AsyncResult<JsonArray>> handler) {
+    try {
+      ResultSetFuture resultSetFuture = sharedImportsSession.executeAsync(GET_ALL_SHARED_IMPORTS);
+      com.datastax.driver.core.ResultSet resultSet = resultSetFuture.getUninterruptibly();
+      Iterator<Row> iterator = resultSet.iterator();
+      JsonArray sharedImports = new JsonArray();
+
+      while (iterator.hasNext()) {
+        if (resultSet.getAvailableWithoutFetching() == 100 && !resultSet.isFullyFetched()) {
+          resultSet.fetchMoreResults();
+        }
+        Row row = iterator.next();
+        if(row.getBool("compared")) {
+          sharedImports.add(toSiJson(row));
+        }
+      }
+      handler.handle(Future.succeededFuture(sharedImports));
+
+    } catch (NoHostAvailableException nhaexc) {
+      logger.log(Level.WARNING , ">>> \tNo Host Available Exception: {0}" , nhaexc.getMessage());
+      handler.handle(Future.failedFuture(Json.encode(new JsonObject().put("exception",nhaexc.getMessage()))));
+    } catch (QueryExecutionException qeexc) {
+      logger.log(Level.WARNING , ">>> \tQuery Execution Exception: {0}" , qeexc.getMessage());
+      handler.handle(Future.failedFuture(Json.encode(new JsonObject().put("exception",qeexc.getMessage()))));
+    } catch (QueryValidationException qvexc) {
+      logger.log(Level.WARNING , ">>> \tQuery Validation Exception: {0}" , qvexc.getMessage());
+      handler.handle(Future.failedFuture(Json.encode(new JsonObject().put("exception",qvexc.getMessage()))));
+    } catch (Exception e) {
+      logger.log(Level.WARNING , ">>> \tException: {0}" , e.getMessage());
+      handler.handle(Future.failedFuture(Json.encode(new JsonObject().put("exception",e.getMessage()))));
+    }
   }
 
   @Override
@@ -296,5 +355,65 @@ public class SharedImportsServiceImpl implements SharedImportsService {
     });
   }
 
+  @Override
+  public void getOriginUrlHeaders(String originUrl, Handler<AsyncResult<JsonObject>> handler) {
+    URL sourceUrl = null;
+    String HTTPS = "https";
+    URL httpsSourceUrl = null;
+    try {
+      sourceUrl = new URL(originUrl);
+      httpsSourceUrl = new URL(HTTPS, sourceUrl.getHost(), sourceUrl.getPort(), sourceUrl.getPath());
+//          logger.info("[[CONTENT>SOURCE>URL]]: " + httpsSourceUrl.toString());
+    }
+    catch (Exception e) {
+      JsonObject me =
+        new JsonObject().put("url", sourceUrl)
+          .put("originUrl", originUrl)
+          .put("exception", e.getMessage())
+          .put("timestamp", Instant.now())
+          .put("badresponse", true)
+          .put("http", "HEAD")
+          .put("content", "source");
+      handler.handle(Future.succeededFuture(me));
+    }
+    client
+      .headAbs(httpsSourceUrl.toString())
+      .followRedirects(true)
+      .timeout(TimeUnit.SECONDS.toMillis(110))
+      .send(res -> {
+        if (res.succeeded()) {
+          HttpResponse<Buffer> result = res.result();
+          if (result.statusCode() == 200) {
+            Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+            JsonObject headersJson = new JsonObject();
+            while (headers.hasNext()) {
+              Map.Entry<String, String> headerTuple = headers.next();
+              headersJson.put(headerTuple.getKey(), headerTuple.getValue());
+            }
+            handler.handle(Future.succeededFuture(headersJson));
+          }
+          else {
+            JsonObject badHeadResponse = new JsonObject();
+            badHeadResponse.put("badresponse" , true);
+            badHeadResponse.put("timestamp" , Instant.now());
+            badHeadResponse.put("result" , result.bodyAsString());
+            badHeadResponse.put("http", "HEAD");
+            badHeadResponse.put("content","source");
+            Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+            while (headers.hasNext()) {
+              Map.Entry<String, String> headerTuple = headers.next();
+              badHeadResponse.put(headerTuple.getKey(), headerTuple.getValue());
+            }
+            handler.handle(Future.succeededFuture(badHeadResponse));
+          }
+        } else {
+          JsonObject failed = new JsonObject();
+          failed.put("timestamp" , Instant.now());
+          failed.put("success" , false);
+          failed.put("cause" , res.cause().getMessage());
+          handler.handle(Future.succeededFuture(failed));
+        }
+      });
+  }
 
 }

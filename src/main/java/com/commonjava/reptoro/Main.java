@@ -152,16 +152,18 @@ public class Main {
                 .onFailure(t -> handleApplicationStartedFailure(t));
 
 
+                //******************************** REPLICATE REPTORO START ***********************************
                 // TEST START REMOTE MAVEN REPOS...
-//                vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
-//                    eb.send(Topics.REPO_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
-//                });
+                vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
+                    eb.send(Topics.REPO_FETCH, new JsonObject().put("cmd", "start").put("validate","remote-repos").put("packageType","maven"));
+                });
 
               // TEST START SHARED IMPORTS PROCESS...
-//              vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
-//                eb.send(Topics.SHARED_FETCH, new JsonObject().put("cmd", "start").put("packageType","maven"));
-//              });
+              vertx.setTimer(TimeUnit.SECONDS.toMillis(10), ar -> {
+                eb.send(Topics.SHARED_FETCH, new JsonObject().put("cmd", "start").put("validate","shared-imports").put("type","sealed"));
+              });
 
+              //********* END OF TESTING SHARED IMPORTS AND REMOTE REPOSITORY VALIDATION **********************
             }
         });
 

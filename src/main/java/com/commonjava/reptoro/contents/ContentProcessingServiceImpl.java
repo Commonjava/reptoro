@@ -163,13 +163,10 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
         URL sourceUrl = null;
         String HTTPS = "https";
         URL httpsSourceUrl = null;
-
         try {
             sourceUrl = new URL(source);
             httpsSourceUrl = new URL(HTTPS, sourceUrl.getHost(), sourceUrl.getPort(), sourceUrl.getPath().substring(0,sourceUrl.getPath().length()-1) + path); //sourceUrl.getPath().substring(0,sourceUrl.getPath().length()-1) + path);
-
 //          logger.info("[[CONTENT>SOURCE>URL]]: " + httpsSourceUrl.toString());
-
         }
         catch (Exception e) {
           JsonObject me =
@@ -183,7 +180,6 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
           content.put(Const.SOURCEHEADERS,me);
           handler.handle(Future.succeededFuture(content));
         }
-
       client
         .headAbs(httpsSourceUrl.toString())
         .followRedirects(true)
@@ -225,8 +221,6 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
             handler.handle(Future.succeededFuture(content));
           }
         });
-
-
     }
 
     @Override
@@ -242,7 +236,7 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
             JsonArray dataArr = new JsonArray();
 
             Iterator<Row> iterator = resultSet.iterator();
-            while ((iterator.hasNext())) {
+            while (iterator.hasNext()) {
                 if(resultSet.getAvailableWithoutFetching() == 100 && !resultSet.isFullyFetched()) {
                     resultSet.fetchMoreResults();
                 }

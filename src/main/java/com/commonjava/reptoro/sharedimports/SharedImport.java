@@ -1,6 +1,7 @@
 package com.commonjava.reptoro.sharedimports;
 
 
+import com.datastax.driver.core.Row;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -42,10 +43,19 @@ public class SharedImport {
   @Column(name = "compared")
   Boolean compared;
 
+  @Column(name = "pathmatch")
+  Boolean pathmatch;
+
+  @Column(name = "sourceheaders")
+  String sourceheaders;
+
+  @Column(name = "checksum")
+  Boolean checksum;
+
   public SharedImport() {
   }
 
-  public SharedImport(String id, String storeKey, String accessChannel, String path, String originUrl, String localUrl, String md5, String sha256, String sha1,Boolean compared) {
+  public SharedImport(String id, String storeKey, String accessChannel, String path, String originUrl, String localUrl, String md5, String sha256, String sha1,Boolean compared,Boolean pathmatch,String sourceheaders,Boolean checksum) {
     this.id = id;
     this.storeKey = storeKey;
     this.accessChannel = accessChannel;
@@ -56,6 +66,9 @@ public class SharedImport {
     this.sha256 = sha256;
     this.sha1 = sha1;
     this.compared = compared;
+    this.pathmatch = pathmatch;
+    this.sourceheaders = sourceheaders;
+    this.checksum = checksum;
   }
 
   public SharedImport(JsonObject sharedImportReport) {
@@ -69,9 +82,27 @@ public class SharedImport {
     this.sha256 = sharedImportReport.containsKey("sha256") ? sharedImportReport.getString("sha256") : "";
     this.sha1 = sharedImportReport.containsKey("sha1") ? sharedImportReport.getString("sha1") : "";
     this.compared = sharedImportReport.containsKey("compared") ? sharedImportReport.getBoolean("compared") : false;
+
+    this.pathmatch = sharedImportReport.containsKey("pathmatch") ? sharedImportReport.getBoolean("pathmatch") : false;
+    this.checksum = sharedImportReport.containsKey("checksum") ? sharedImportReport.getBoolean("checksum") : false;
+    if(sharedImportReport.containsKey("sourceheaders") && sharedImportReport.getValue("sourceheaders") instanceof JsonObject) {
+      this.sourceheaders = sharedImportReport.getJsonObject("sourceheaders").encode();
+    } else {
+      this.sourceheaders = sharedImportReport.getString("sourceheaders");
+    }
   }
 
-  public JsonObject toJson(SharedImport sharedImport) {
+  public static JsonObject toSiJson(Row siRow) {
+    return new JsonObject()
+      .put("id",siRow.getString("id")).put("storekey",siRow.getString("storekey"))
+      .put("accesschannel",siRow.getString("accesschannel")).put("path",siRow.getString("path"))
+      .put("originurl",siRow.getString("originurl")).put("localurl",siRow.getString("localurl"))
+      .put("md5",siRow.getString("md5")).put("sha1",siRow.getString("sha1")).put("sha256",siRow.getString("sha256"))
+      .put("compared",siRow.getBool("compared")).put("checksum",siRow.getBool("checksum")).put("pathmatch",siRow.getBool("pathmatch"))
+      .put("sourceheaders",siRow.getString("sourceheaders"));
+  }
+
+  public static JsonObject toJson(SharedImport sharedImport) {
     return new JsonObject()
       .put("id" , sharedImport.getId())
       .put("storeKey" , sharedImport.getStoreKey())
@@ -83,7 +114,34 @@ public class SharedImport {
       .put("sha256" , sharedImport.getSha256())
       .put("sha1" , sharedImport.getSha1())
       .put("compared",sharedImport.getCompared())
+      .put("pathmatch",sharedImport.getPathmatch())
+      .put("checksum",sharedImport.getChecksum())
+      .put("sourceheaders",sharedImport.getSourceheaders())
       ;
+  }
+
+  public String getSourceheaders() {
+    return sourceheaders;
+  }
+
+  public void setSourceheaders(String sourceheaders) {
+    this.sourceheaders = sourceheaders;
+  }
+
+  public Boolean getChecksum() {
+    return checksum;
+  }
+
+  public void setChecksum(Boolean checksum) {
+    this.checksum = checksum;
+  }
+
+  public Boolean getPathmatch() {
+    return pathmatch;
+  }
+
+  public void setPathmatch(Boolean pathmatch) {
+    this.pathmatch = pathmatch;
   }
 
   public Boolean getCompared() {

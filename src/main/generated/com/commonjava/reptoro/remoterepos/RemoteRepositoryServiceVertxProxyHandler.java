@@ -41,6 +41,7 @@ import io.vertx.serviceproxy.ServiceException;
 import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
 import io.vertx.serviceproxy.HelperUtils;
 
+import io.vertx.core.json.JsonArray;
 import java.util.List;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
@@ -158,6 +159,10 @@ public class RemoteRepositoryServiceVertxProxyHandler extends ProxyHandler {
         case "updateNewRemoteRepositories": {
           service.updateNewRemoteRepositories(HelperUtils.convertList(json.getJsonArray("repos").getList()),
                         HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getAllRemoteRepositoriesFromDb": {
+          service.getAllRemoteRepositoriesFromDb(HelperUtils.createHandler(msg));
           break;
         }
         default: throw new IllegalStateException("Invalid action: " + action);

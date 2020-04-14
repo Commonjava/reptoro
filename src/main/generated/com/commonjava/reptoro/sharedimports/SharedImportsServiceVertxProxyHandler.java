@@ -41,6 +41,7 @@ import io.vertx.serviceproxy.ServiceException;
 import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
 import io.vertx.serviceproxy.HelperUtils;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -144,6 +145,15 @@ public class SharedImportsServiceVertxProxyHandler extends ProxyHandler {
         case "deleteSharedImportBuildId": {
           service.deleteSharedImportBuildId((java.lang.String)json.getValue("buildId"),
                         HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getOriginUrlHeaders": {
+          service.getOriginUrlHeaders((java.lang.String)json.getValue("originUrl"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getAllSharedImportsFromDb": {
+          service.getAllSharedImportsFromDb(HelperUtils.createHandler(msg));
           break;
         }
         default: throw new IllegalStateException("Invalid action: " + action);

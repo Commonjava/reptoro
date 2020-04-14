@@ -1,5 +1,6 @@
 package com.commonjava.reptoro.sharedimports;
 
+import com.commonjava.reptoro.common.Const;
 import com.commonjava.reptoro.common.Topics;
 import io.vertx.cassandra.Mapper;
 import io.vertx.cassandra.MappingManager;
@@ -11,6 +12,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -49,16 +51,20 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
   private void handleSharedImportCompareHeaders(Message<JsonObject> tMessage) {
     JsonObject body = tMessage.body();
 
-    if(Objects.nonNull(body)) {
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,body);
 
-      changeSharedImportState(body)
-        .onComplete(complete -> {
-          if(complete.failed()) {
-            logger.info("SAFE FAILED: " + complete.cause());
-          } else {
-//            logger.info("SAVE SUCESSFULL: " + complete.result());
-          }
-        });
+    if(Objects.nonNull(body)) {
+      JsonObject download = body.getJsonObject("download");
+
+      // get originUrl headers with checksums
+      getOriginUrlHeaders(download)
+        // compare local checksums with origin checksums
+        .compose(this::compareChecksums)
+        // update download record in db
+        .compose(this::changeSharedImportState)
+        .onComplete(this::handleCompleteCompareChecksums);
+
 
 //      compareSharedImportContentChecksums(body)
 //        .compose(this::updateSharedImportContent)
@@ -71,7 +77,7 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
 
   private void handleSharedImportPathDoesntMatch(Message<JsonObject> tMessage) {
     JsonObject resultBrowsedWithDownload = tMessage.body();
-
+    // TODO handle all downloads which are not present in indy browsed paths
   }
 
   private void handleProcessingSharedImportReports(Message<JsonObject> tMessage) {
@@ -82,11 +88,11 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
     // compare shared import report downloads...
     if (report.containsKey("downloads")) {
       JsonArray downloads = report.getJsonArray("downloads");
-      //TODO Filter also content paths from config and filter also only allowed content files...
       CompositeFuture.join(
         downloads.stream()
           .map(download -> new JsonObject(download.toString()))
           .filter(download -> !download.getString("accessChannel").equalsIgnoreCase("GENERIC_PROXY"))
+          .filter(download -> download.containsKey("originUrl") && !download.getString("originUrl").isEmpty())
           .filter(this::filterSslProtocols)
           .filter(this::isExceptedFilenameExtension)
           .filter(this::isAllowedContentExtensions)
@@ -126,9 +132,9 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
     }
   }
 
-  private Future<JsonObject> changeSharedImportState(JsonObject browsedContent) {
+  private Future<JsonObject> changeSharedImportState(JsonObject download) {
     Promise<JsonObject> promise = Promise.promise();
-    JsonObject download = browsedContent.getJsonObject("download");
+//    JsonObject download = browsedContent.getJsonObject("download");
     download.put("compared",true);
     SharedImport sharedImport = new SharedImport(download);
     sharedImportMapper.save(sharedImport , res -> {
@@ -137,23 +143,127 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
         promise.complete();
       } else {
 //        logger.info("SAVING SHARED IMPORT SUCCESSFUL: " + res.result());
-        promise.complete(browsedContent);
+        promise.complete(download);
       }
     });
     return promise.future();
   }
 
-  private Future<JsonObject> compareSharedImportContentChecksums(JsonObject download) {
+  private Future<JsonObject> compareSharedImportContentChecksums(JsonObject browsedContent) {
+    Promise<JsonObject> promise = Promise.promise();
+    JsonObject download = browsedContent.getJsonObject("download");
+
+
+
+
+    return promise.future();
+  }
+
+  private void handleCompleteCompareChecksums(AsyncResult<JsonObject> asyncResult) {
+    if(asyncResult.failed()) {
+      logger.info("OPERATION COMPARING SHARED IMPORT HEADERS FAILED: " + asyncResult.cause());
+    } else {
+      // successful compare and update...
+    }
+  }
+
+  private Future<JsonObject> compareChecksums(JsonObject download) {
+    Promise<JsonObject> promise = Promise.promise();
+    if(Objects.nonNull(download)) {
+      // TODO Implement compare checksums logic...
+      String localMd5 = download.getString("md5");
+      String localSha1 = download.getString("sha1");
+      String localSha256 = download.getString("sha256");
+
+      String originMd5 = "";
+      String originSha1 = "";
+      String originSha256 = "";
+      String etagChecksum = "";
+
+      Boolean compareChecksum = false;
+
+      JsonObject sourceHeaders = download.getJsonObject(Const.SOURCEHEADERS);
+      Set<String> keys = sourceHeaders.fieldNames();
+      for(String key : keys) {
+        if(key.toLowerCase().contains("md5")) {
+          originMd5 = sourceHeaders.getString(key);
+        } else if(key.toLowerCase().contains("sha1")) {
+          originSha1 = sourceHeaders.getString(key);
+        } else if(key.toLowerCase().contains("sha256")) {
+          originSha256 = sourceHeaders.getString(key);
+        } else if (key.toLowerCase().contains("etag")) {
+          etagChecksum = sourceHeaders.getString(key);
+        }
+      }
+
+      if(!originMd5.isEmpty()) {
+        compareChecksum = originMd5.equalsIgnoreCase(localMd5);
+        download.put("checksum",compareChecksum);
+        promise.complete(download);
+      } else if(!originSha1.isEmpty()) {
+        compareChecksum = originSha1.equalsIgnoreCase(localSha1);
+        download.put("checksum",compareChecksum);
+        promise.complete(download);
+      } else if(!originSha256.isEmpty()) {
+        compareChecksum = originSha256.equalsIgnoreCase(localSha256);
+        download.put("checksum",compareChecksum);
+        promise.complete(download);
+      } else {
+        // ETAG with checksum inside value string...
+        if(!etagChecksum.isEmpty()) {
+          if(etagChecksum.toLowerCase().contains("md5")) {
+            // compare localMd5 with inner md5 checksum
+            if(etagChecksum.contains(localMd5)) {
+              download.put("checksum",true);
+              promise.complete(download);
+            } else {
+              download.put("checksum",false);
+              promise.complete(download);
+            }
+          } else if(etagChecksum.toLowerCase().contains("sha1")) {
+            // compare localSha1 with inner sha1 checksum
+            if(etagChecksum.contains(localSha1)) {
+              download.put("checksum",true);
+              promise.complete(download);
+            } else {
+              download.put("checksum",false);
+              promise.complete(download);
+            }
+          } else {
+            // can be sha256??? but for now return false
+            if(etagChecksum.toLowerCase().contains("sha256")) {
+              logger.info("SHA256 FOR " + download.getString("originUrl"));
+              download.put("checksum",false);
+              promise.complete(download);
+            } else {
+              download.put("checksum",false);
+              promise.complete(download);
+            }
+          }
+        } else {
+          download.put("checksum",compareChecksum);
+          promise.complete(download);
+        }
+      }
+    } else {
+      promise.complete();
+    }
+    return promise.future();
+  }
+
+  private Future<JsonObject> getOriginUrlHeaders(JsonObject download) {
     Promise<JsonObject> promise = Promise.promise();
     String originUrl = download.getString("originUrl");
-    String md5 = download.getString("md5");
-    String sha1 = download.getString("sha1");
-    String sha256 = download.getString("sha256");
-
-    // TODO compare local with upstream content checksums and complete...
-//    logger.info("COMPARE HEADERS DOWNLOAD: \n" + download.encodePrettily());
-    promise.complete();
-
+    sharedImportsService.getOriginUrlHeaders(originUrl,res -> {
+      if(res.failed()) {
+        logger.info("FAILED FETCHING SOURCE HEADERS FOR SHARED IMPORT PATH: \n" + download.getString("originUrl"));
+        promise.complete();
+      } else {
+        JsonObject headers = res.result();
+        download.put(Const.SOURCEHEADERS , headers);
+        promise.complete(download);
+      }
+    });
     return promise.future();
   }
 
@@ -171,7 +281,9 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
   private Future<JsonObject> checkSharedImportContentPath(JsonObject browsedContent) {
     Promise<JsonObject> promise = Promise.promise();
     if (Objects.nonNull(browsedContent)) {
-      JsonArray listingUrls = browsedContent.containsKey("listingUrls") ? browsedContent.getJsonArray("listingUrls") : new JsonArray();
+      JsonArray listingUrls =
+        browsedContent.containsKey("listingUrls") ? browsedContent.getJsonArray("listingUrls") : new JsonArray();
+      JsonObject download = browsedContent.getJsonObject("download");
 
       if (!listingUrls.isEmpty()) {
         boolean checkContentPath =
@@ -185,22 +297,27 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
                 return false;
               }
             );
+
+
         if (checkContentPath) {
-          browsedContent.put("verified", true);
-          browsedContent.put("pathmatch", true);
+          download.put("verified", true);
+          download.put("pathmatch", true);
           vertx.eventBus().send(Topics.SHARED_COMPARE_HEADERS,browsedContent);
           promise.complete(browsedContent);
         } else {
           //TODO Send Downloaded Content path ( which doesn't match ) to be future proccessed?...
-          browsedContent.put("verified", true);
-          browsedContent.put("pathmatch", false);
+          download.put("verified", true);
+          download.put("pathmatch", false);
           vertx.eventBus().send(Topics.SHARED_COMPARE_HEADERS,browsedContent);
 //          vertx.eventBus().send(Topics.SHARED_IMPORTS_BAD_PATH, browsedContent);
           promise.complete();
         }
       } else {
         //TODO Send Downloaded Content path ( which doesn't match ) to be future proccessed?...
-        logger.info("EMPTY LISTINGS FOR PATH: " + browsedContent.getString("path") + "\nBUILD ID: " + browsedContent.getString("id"));
+        download.put("verified", true);
+        download.put("pathmatch", false);
+        logger.info("EMPTY LISTINGS FOR PATH: " + browsedContent.getString("path") +
+                          "\nBUILD ID: " + browsedContent.getString("id"));
         vertx.eventBus().send(Topics.SHARED_COMPARE_HEADERS,browsedContent);
 //        vertx.eventBus().send(Topics.SHARED_IMPORTS_BAD_PATH, browsedContent);
         promise.complete();
@@ -309,5 +426,6 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
   @Override
   public void stop() throws Exception {
     super.stop();
+    cassandraClient.close();
   }
 }

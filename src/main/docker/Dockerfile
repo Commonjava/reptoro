@@ -9,12 +9,11 @@ COPY maven /deployments/
 RUN cd /etc/pki/ca-trust/source/anchors
 RUN curl -O https://password.corp.redhat.com/RH-IT-Root-CA.crt
 #RUN update-ca-trust extract
-
 ADD maven/Eng_Ops_CA.crt /etc/pki/ca-trust/source/anchors/Eng_Ops_CA.crt
 ADD maven/Red_Hat_IS_CA.crt /etc/pki/ca-trust/source/anchors/Red_Hat_IS_CA.crt
 ADD maven/RH-IT-Root-CA.crt /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
-RUN keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -validity 360 -keysize 2048
-#ADD maven/paas_psi_redhat_com.crt /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crt
+#RUN keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -validity 360 -keysize 2048s
+#ADD maven/paas_psi_redhat_com.crt /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crts
 #RUN keytool -import -alias psicert1 -storepass changeit -noprompt -trustcacerts -file /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crt -keystore $JAVA_HOME/lib/security/cacerts
 #RUN keytool -import -alias psicert2 -storepass changeit -noprompt -trustcacerts -file /etc/pki/ca-trust/source/anchors/Eng_Ops_CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 #RUN keytool -import -alias psicert3 -storepass changeit -noprompt -trustcacerts -file /etc/pki/ca-trust/source/anchors/Red_Hat_IS_CA.crt -keystore $JAVA_HOME/lib/security/cacerts

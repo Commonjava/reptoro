@@ -21,6 +21,7 @@ public class Topics {
     public static final String SHARED_COMPARE_HEADERS = "shared.import.compare.headers";
 
 
+    public static final String CLIENT_TOPIC = "publish.to.client";
 
     public final static String BROWSED_STORES = "browsed.stores";
     public static final String VERTX_EXCEPTIONS = "vertx.exceptions" ;

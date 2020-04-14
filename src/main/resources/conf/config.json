@@ -28,15 +28,21 @@
   "reptoro": {
     "except.remote.repos": ["maven:remote:prod-shared-imports","maven:remote:i-brewroot-4","maven:remote:i-brewroot-9","maven:remote:fusesource-proxy","maven:remote:test_remote","maven:remote:i-jb-eap-7.1-brew-2","maven:remote:i-brew.jb.common"],
     "except.filename.extensions": ["maven-metadata.xml", ".sha1", ".md5", ".asc",".listing.txt"],
-    "allowed.file.extensions": ["pom","zip","jar","tar","war","ear","xml"]
+    "allowed.file.extensions": ["pom","zip","jar","tar","war","ear","xml"],
+    "api.gateway.http.port": 8080,
+    "session.secret": "zwiebelfische"
   },
   "keycloak": {
     "realm": "pncredhat",
-    "auth-server-url": "https://secure-sso.newcastle-stage.svc/auth",
-    "ssl-required": "external",
+    "auth-server-url": "https://secure-sso-newcastle-stage.psi.redhat.com/auth",
+    "ssl-required": "none",
     "resource": "reptoro",
-    "public-client": true,
-    "confidential-port": 0
+    "verify-token-audience": true,
+    "use-resource-role-mappings": true,
+    "confidential-port": 0,
+    "credentials": {
+      "secret": ""
+    }
   },
   "mockdata": {
     "type": "remote",

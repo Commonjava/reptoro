@@ -7,6 +7,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 @ProxyGen
@@ -25,6 +26,10 @@ public interface SharedImportsService {
   void getSharedImportContent(String path , Handler<AsyncResult<JsonObject>> handler);
 
   void deleteSharedImportBuildId(String buildId , Handler<AsyncResult<JsonObject>> handler);
+
+  void getOriginUrlHeaders(String originUrl , Handler<AsyncResult<JsonObject>> handler);
+
+  void getAllSharedImportsFromDb(Handler<AsyncResult<JsonArray>> handler);
 
   @GenIgnore
   static SharedImportsService createProxy(Vertx vertx, String address) {

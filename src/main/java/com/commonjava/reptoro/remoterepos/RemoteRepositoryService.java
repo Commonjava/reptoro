@@ -6,6 +6,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -36,6 +37,8 @@ public interface RemoteRepositoryService {
     void getOneRemoteRepository(Handler<AsyncResult<JsonObject>> handler);
 
     void updateNewRemoteRepositories(List<JsonObject> repos, Handler<AsyncResult<JsonObject>> handler);
+
+    void getAllRemoteRepositoriesFromDb(Handler<AsyncResult<JsonArray>> handler);
 
     @GenIgnore
     static RemoteRepositoryService createProxy(Vertx vertx, String address) {

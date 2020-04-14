@@ -9,6 +9,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -40,7 +41,7 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
     private final String CREATE_REPTORO_KEYSPACE = "CREATE KEYSPACE IF NOT EXISTS reptoro WITH replication = {'class':'SimpleStrategy', 'replication_factor' : 3};";
     private final String CREATE_REPTORO_REPOS_TABLE = "CREATE TABLE IF NOT EXISTS reptoro.repos(KEY text PRIMARY KEY,TYPE text,HOST text,PACKAGETYPE text,NAME text,URL text,COMPARED boolean,STAGE text);";
     private final String CREATE_REPTORO_CONTENTS_TABLE = "CREATE TABLE IF NOT EXISTS reptoro.contents(FILESYSTEM text,LOCALHEADERS text,SOURCEHEADERS text,SOURCE text,PARENTPATH text,FILENAME text,CHECKSUM text,FILEID text,FILESTORAGE text,SIZE bigint,PRIMARY KEY((PARENTPATH,FILENAME),FILESYSTEM));";
-    private final String GET_UNPROCCESSED_REPO = "SELECT * FROM reptoro.repos";
+    private final String GET_ALL_REPOS = "SELECT * FROM reptoro.repos";
 
     public RemoteRepositoryServiceImpl(Vertx vertx, WebClient client, JsonObject config) {
         JsonObject indyConfig = config.getJsonObject("indy");
@@ -278,7 +279,7 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
     @Override
     public void getOneRemoteRepository(Handler<AsyncResult<JsonObject>> handler) {
 
-        cassandraReptoroClient.execute(GET_UNPROCCESSED_REPO , res -> {
+        cassandraReptoroClient.execute(GET_ALL_REPOS , res -> {
            if(res.failed()) {
                handler.handle(Future.failedFuture(res.cause()));
            } else {
@@ -342,6 +343,38 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
         }
 
     }
+
+  @Override
+  public void getAllRemoteRepositoriesFromDb(Handler<AsyncResult<JsonArray>> handler) {
+    cassandraReptoroClient.execute(GET_ALL_REPOS , res -> {
+      if(res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        ResultSet result = res.result();
+        result.all(repos -> {
+          List<Row> results = repos.result();
+
+          JsonArray reposList = new JsonArray();
+
+          for(Row row : results) {
+            JsonObject repo = new JsonObject();
+            repo
+              .put("key",row.getString("key"))
+              .put("host",row.getString("host"))
+              .put("name",row.getString("name"))
+              .put("packagetype",row.getString("packagetype"))
+              .put("stage",row.getString("stage"))
+              .put("type",row.getString("type"))
+              .put("url",row.getString("url"))
+              .put("compared",row.getBool("compared"));
+            reposList.add(repo);
+
+          }
+          handler.handle(Future.succeededFuture(reposList));
+        });
+      }
+    });
+  }
 
 
 }
