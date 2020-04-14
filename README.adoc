@@ -1,4 +1,4 @@
-= Repomigrator-test
+= Reptoro - Ad-Hok Secure Service Migration for Indy
 
 image:https://img.shields.io/badge/vert.x-3.8.3-purple.svg[link="https://vertx.io"]
 
