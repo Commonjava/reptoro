@@ -2,7 +2,6 @@ package com.commonjava.reptoro.sharedimports;
 
 import com.commonjava.reptoro.common.Const;
 import com.commonjava.reptoro.common.Topics;
-import com.commonjava.reptoro.remoterepos.RemoteRepository;
 import io.vertx.cassandra.Mapper;
 import io.vertx.cassandra.MappingManager;
 import io.vertx.core.*;
@@ -12,9 +11,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -28,10 +24,15 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
   private SharedImportsService sharedImportsService;
   private Mapper<SharedImport> sharedImportMapper;
 
+  private Vertx vertx;
+  private JsonObject config;
+
 
   @Override
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
+    this.vertx = vertx;
+    this.config = vertx.getOrCreateContext().config();
     DeliveryOptions options = new DeliveryOptions();
     options.setSendTimeout(TimeUnit.SECONDS.toMillis(90));
     this.sharedImportsService = SharedImportsService.createProxyWithOptions(vertx, Const.SHARED_IMPORTS_SERVICE, options);
@@ -65,9 +66,12 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
 
   private void handleSharedImportsFetchAll(Message<JsonObject> jsonObjectMessage) {
     JsonObject cmd = jsonObjectMessage.body();
+
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg",cmd));
+
     logger.info("RECEIVED START VALIDATE SHARED IMPORTS| COMMAND: \n" + cmd.encodePrettily());
     // TODO different commands and different sealed records, maybe?
-
     logger.info("==============<FETCHING SEALED SHARED IMPORTS FROM INDY>================");
     // get all sealed records ID's
     sharedImportsService.getAllSealedTrackingRecords(res -> {
@@ -81,6 +85,7 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
         CompositeFuture.join(
           sealedRecords.stream()
             .map(sealed -> String.valueOf(sealed))
+            .filter(this::filterTestPerformanceBuilds)
             .map(sealed -> checkSealedRecordInDb(sealed).compose(this::writeSealedRecordInDb))
             .collect(Collectors.toList())
         ).onComplete(complete -> {
@@ -99,8 +104,18 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
 
   }
 
+  private boolean filterTestPerformanceBuilds(String buildId) {
+    JsonArray exceptedBuildIds = config().getJsonObject("reptoro").getJsonArray("except.shared.import.builds.ids");
+    return exceptedBuildIds.stream()
+      .map(buildSubstr -> String.valueOf(buildSubstr))
+      .anyMatch(buildSubstr -> !buildId.startsWith(buildSubstr));
+  }
+
   private void handleSharedImportsGetOne(Message<JsonObject> jsonObjectMessage) {
     JsonObject sealedType = jsonObjectMessage.body();
+
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg", sealedType));
 
     if(sealedType.getString("type").equalsIgnoreCase("sealed")) {
 
@@ -114,12 +129,12 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
         } else {
           JsonObject sharedImport = res.result();
           sharedImportsService.deleteSharedImportBuildId(sharedImport.getString("id") , id -> {
-//          sharedImportMapper.delete(Collections.singletonList(sharedImport.getString("id")),id -> {
+//          sharedImportMapper.delete(Collections.singletonList(sharedImport.getString("id")), id -> {
             if(id.failed()) {
               logger.info("SHARED IMPORT MARKER BUILD-ID FIELD IS NOT DELETED! " + id.cause());
             } else {
               vertx.eventBus().send(Topics.SHARED_START , sharedImport);
-              logger.info("SHARED IMPORT MARKER BUILD-ID FIELD DELETED!");
+              logger.info("SHARED IMPORT MARKER BUILD-ID FIELD DELETED\nOPERATION RESULT: " + id.result().encodePrettily());
             }
           });
         }
@@ -137,8 +152,8 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
       if(res.failed()) {
         logger.info("PROBLEM RETRIEVING RECORD FROM DB: " + res.cause());
       } else {
-        JsonObject result = res.result();
-        if(Objects.isNull(result) || result.getString("id").isEmpty()) {
+        Boolean result = res.result();
+        if(Objects.isNull(result) || result) {
           // record is not in db
           promise.complete(sealedRecord);
         } else {
@@ -185,14 +200,20 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
     JsonObject sharedImport = jsonObjectMessage.body();
 
     // publish to client:
-    vertx.eventBus().publish(Topics.CLIENT_TOPIC,sharedImport);
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg", sharedImport));
+
+    // respond to message sender
+    jsonObjectMessage.reply(new JsonObject().put("operation", "success").put("timestamp", Instant.now()));
 
     // get sealed record report with downloads json array
     sharedImportsService.getSealedRecordRaport(sharedImport.getString("id") , res -> {
       if(res.failed()) {
         logger.info("[[SEALED.RECORD.REPORT.UNAVAILABLE]] " + res.cause());
+        // publish to client:
+        vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("fail", res.cause()));
       } else {
         JsonObject report = res.result();
+
         if(report.containsKey("downloads")) {
           vertx.eventBus().send(Topics.PROCESS_SHAREDIMPORT_REPORT , report);
         } else {
@@ -222,8 +243,7 @@ public class ProcessingSharedImportsVerticle extends AbstractVerticle {
 
   private Future<JsonObject> updateSharedImportWithoutDownloads(JsonObject sharedImport) {
     Promise<JsonObject> promise = Promise.promise();
-    SharedImport sharedImport1 = new SharedImport(sharedImport);
-    sharedImportMapper.save(sharedImport1 , res -> {
+    sharedImportMapper.save(new SharedImport(sharedImport,true) , res -> {
       if(res.failed()) {
         logger.info("FAILED UPDATING SHARED IMPORT [without downloads] IN DB: " + res.cause());
         promise.complete();

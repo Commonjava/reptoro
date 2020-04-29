@@ -165,6 +165,20 @@ public class RemoteRepositoryServiceVertxProxyHandler extends ProxyHandler {
           service.getAllRemoteRepositoriesFromDb(HelperUtils.createHandler(msg));
           break;
         }
+        case "getAllNotComparedRemoteRepositories": {
+          service.getAllNotComparedRemoteRepositories(HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getRemoteRepositoryCount": {
+          service.getRemoteRepositoryCount(HelperUtils.createHandler(msg));
+          break;
+        }
+        case "changeRemoteRepositoryProtocol": {
+          service.changeRemoteRepositoryProtocol((io.vertx.core.json.JsonObject)json.getValue("repoChange"),
+                        (java.lang.String)json.getValue("protocol"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
         default: throw new IllegalStateException("Invalid action: " + action);
       }
     } catch (Throwable t) {

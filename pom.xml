@@ -163,15 +163,28 @@
     <!--            <artifactId>logback-classic</artifactId>-->
     <!--            <version>1.2.3</version>-->
     <!--        </dependency>-->
-    <!--    <dependency>-->
-    <!--      <groupId>io.vertx</groupId>-->
-    <!--      <artifactId>vertx-dropwizard-metrics</artifactId>-->
-    <!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>io.vertx</groupId>-->
+<!--      <artifactId>vertx-dropwizard-metrics</artifactId>-->
+<!--      <version>3.6.3</version>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-health-check</artifactId>
     </dependency>
 
+
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-dropwizard-metrics</artifactId>
+      <version>3.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-jmx</artifactId>
+      <version>4.0.2</version>
+    </dependency>
 
     <!--        <dependency>-->
     <!--            <groupId>io.vertx</groupId>-->

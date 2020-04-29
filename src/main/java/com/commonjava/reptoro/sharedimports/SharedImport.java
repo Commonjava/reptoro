@@ -85,11 +85,57 @@ public class SharedImport {
 
     this.pathmatch = sharedImportReport.containsKey("pathmatch") ? sharedImportReport.getBoolean("pathmatch") : false;
     this.checksum = sharedImportReport.containsKey("checksum") ? sharedImportReport.getBoolean("checksum") : false;
+
     if(sharedImportReport.containsKey("sourceheaders") && sharedImportReport.getValue("sourceheaders") instanceof JsonObject) {
       this.sourceheaders = sharedImportReport.getJsonObject("sourceheaders").encode();
     } else {
-      this.sourceheaders = sharedImportReport.getString("sourceheaders");
+      this.sourceheaders = sharedImportReport.containsKey("sourceheaders") ? sharedImportReport.getString("sourceheaders") : "";
     }
+  }
+
+  public SharedImport(JsonObject sharedImportReport,Boolean empty) {
+    if(empty) {
+      this.id = sharedImportReport.getString("id");
+      this.storeKey = sharedImportReport.containsKey("storeKey") ? sharedImportReport.getString("storeKey") : "-";
+      this.accessChannel = sharedImportReport.containsKey("accessChannel") ? sharedImportReport.getString("accessChannel") : "-";
+      this.path = sharedImportReport.containsKey("path") ? sharedImportReport.getString("path") : "-";
+      this.originUrl = sharedImportReport.containsKey("originUrl") ? sharedImportReport.getString("originUrl") : "-";
+      this.localUrl = sharedImportReport.containsKey("localUrl") ? sharedImportReport.getString("localUrl") : "-";
+      this.md5 = sharedImportReport.containsKey("md5") ? sharedImportReport.getString("md5") : "-";
+      this.sha256 = sharedImportReport.containsKey("sha256") ? sharedImportReport.getString("sha256") : "-";
+      this.sha1 = sharedImportReport.containsKey("sha1") ? sharedImportReport.getString("sha1") : "-";
+      this.compared = sharedImportReport.containsKey("compared") ? sharedImportReport.getBoolean("compared") : true;
+
+      this.pathmatch = sharedImportReport.containsKey("pathmatch") ? sharedImportReport.getBoolean("pathmatch") : false;
+      this.checksum = sharedImportReport.containsKey("checksum") ? sharedImportReport.getBoolean("checksum") : false;
+
+      if(sharedImportReport.containsKey("sourceheaders") && sharedImportReport.getValue("sourceheaders") instanceof JsonObject) {
+        this.sourceheaders = sharedImportReport.getJsonObject("sourceheaders").encode();
+      } else {
+        this.sourceheaders = sharedImportReport.containsKey("sourceheaders") ? sharedImportReport.getString("sourceheaders") : "-";
+      }
+    } else {
+      this.id = sharedImportReport.getString("id");
+      this.storeKey = sharedImportReport.containsKey("storeKey") ? sharedImportReport.getString("storeKey") : "";
+      this.accessChannel = sharedImportReport.containsKey("accessChannel") ? sharedImportReport.getString("accessChannel") : "";
+      this.path = sharedImportReport.containsKey("path") ? sharedImportReport.getString("path") : "";
+      this.originUrl = sharedImportReport.containsKey("originUrl") ? sharedImportReport.getString("originUrl") : "";
+      this.localUrl = sharedImportReport.containsKey("localUrl") ? sharedImportReport.getString("localUrl") : "";
+      this.md5 = sharedImportReport.containsKey("md5") ? sharedImportReport.getString("md5") : "";
+      this.sha256 = sharedImportReport.containsKey("sha256") ? sharedImportReport.getString("sha256") : "";
+      this.sha1 = sharedImportReport.containsKey("sha1") ? sharedImportReport.getString("sha1") : "";
+      this.compared = sharedImportReport.containsKey("compared") ? sharedImportReport.getBoolean("compared") : false;
+
+      this.pathmatch = sharedImportReport.containsKey("pathmatch") ? sharedImportReport.getBoolean("pathmatch") : false;
+      this.checksum = sharedImportReport.containsKey("checksum") ? sharedImportReport.getBoolean("checksum") : false;
+
+      if(sharedImportReport.containsKey("sourceheaders") && sharedImportReport.getValue("sourceheaders") instanceof JsonObject) {
+        this.sourceheaders = sharedImportReport.getJsonObject("sourceheaders").encode();
+      } else {
+        this.sourceheaders = sharedImportReport.containsKey("sourceheaders") ? sharedImportReport.getString("sourceheaders") : "";
+      }
+    }
+
   }
 
   public static JsonObject toSiJson(Row siRow) {

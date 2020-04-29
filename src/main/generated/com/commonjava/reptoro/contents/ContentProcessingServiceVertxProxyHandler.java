@@ -140,6 +140,15 @@ public class ContentProcessingServiceVertxProxyHandler extends ProxyHandler {
                         HelperUtils.createHandler(msg));
           break;
         }
+        case "getRemoteRepositoryContentsCount": {
+          service.getRemoteRepositoryContentsCount(HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getRemoteRepositoryValidationCount": {
+          service.getRemoteRepositoryValidationCount((java.lang.String)json.getValue("key"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
         default: throw new IllegalStateException("Invalid action: " + action);
       }
     } catch (Throwable t) {

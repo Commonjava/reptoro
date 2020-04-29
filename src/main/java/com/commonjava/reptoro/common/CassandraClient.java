@@ -1,15 +1,10 @@
 package com.commonjava.reptoro.common;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PoolingOptions;
-import com.datastax.driver.core.policies.DefaultRetryPolicy;
-import com.datastax.driver.core.policies.LoggingRetryPolicy;
-import com.datastax.driver.core.policies.Policies;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.CycleDetectingLockFactory;
 import io.vertx.cassandra.CassandraClientOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-
-import java.util.concurrent.TimeUnit;
 
 public class CassandraClient {
 
@@ -44,15 +39,30 @@ public class CassandraClient {
         poolingOptions.setPoolTimeoutMillis(5*1000);
         poolingOptions.setMaxQueueSize(10000);
 
+      Cluster.Builder builder =
         this.cassandraClientOptions
-                .setKeyspace(reptoroKeyspace)
-                .dataStaxClusterBuilder()
+        .setKeyspace(reptoroKeyspace)
+        .dataStaxClusterBuilder();
+
+      builder
+                .withoutMetrics()
+                .withoutJMXReporting()
                 .withPort(port)
                 .withCredentials(user, pass)
                 .withPoolingOptions(poolingOptions)
 //                .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE))
 //                .withReconnectionPolicy(Policies.)
                 .addContactPoint(cassandraHostname);
+
+//      Cluster cluster = builder.build();
+//
+//      JmxReporter reporter =
+//        JmxReporter.forRegistry(cluster.getMetrics().getRegistry())
+//          .inDomain(cluster.getClusterName() + "-metrics")
+//          .build();
+//
+//      reporter.start();
+
         this.cassandraReptoroClient = io.vertx.cassandra.CassandraClient.create(vertx,cassandraClientOptions);
         return this.cassandraReptoroClient;
     }
@@ -69,6 +79,8 @@ public class CassandraClient {
         this.cassandraIndyOptions
 //                .setKeyspace(cassandraKeyspace)
                 .dataStaxClusterBuilder()
+                .withoutMetrics()
+                .withoutJMXReporting()
                 .withPort(port)
                 .withCredentials(user, pass)
                 .addContactPoint(cassandraHostname);

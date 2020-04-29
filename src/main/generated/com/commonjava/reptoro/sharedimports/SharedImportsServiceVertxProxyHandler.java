@@ -156,6 +156,28 @@ public class SharedImportsServiceVertxProxyHandler extends ProxyHandler {
           service.getAllSharedImportsFromDb(HelperUtils.createHandler(msg));
           break;
         }
+        case "getNotComparedSharedImportsFromDB": {
+          service.getNotComparedSharedImportsFromDB(HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getSharedImportContentCount": {
+          service.getSharedImportContentCount(HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getSharedImportCount": {
+          service.getSharedImportCount(HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getSharedImportDownloads": {
+          service.getSharedImportDownloads((java.lang.String)json.getValue("buildId"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
+        case "getDownloads": {
+          service.getDownloads((java.lang.String)json.getValue("buildId"),
+                        HelperUtils.createHandler(msg));
+          break;
+        }
         default: throw new IllegalStateException("Invalid action: " + action);
       }
     } catch (Throwable t) {

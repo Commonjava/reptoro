@@ -12,7 +12,6 @@ import io.vertx.cassandra.MappingManager;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -69,6 +68,9 @@ public class ProcessingHeadersVerticle extends AbstractVerticle {
   private void handleCompareHeaders(Message<JsonObject> tMessage) {
     JsonObject repo = tMessage.body();
     logger.info("=============< HEADERS COMPARING >====================\n\t\t\tREPO: " + repo.getString("key"));
+
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg", "COMPARE HEADERS: " + repo ));
 
     getContentsWithHeadersFromDb(repo)
       .compose(this::compareLocalAndSourceHeaders)

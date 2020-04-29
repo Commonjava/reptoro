@@ -1,73 +1,89 @@
-<div class="row">
-    <div class="col-md-12">
-        <!-- Page Header -->
-        <div class="page-header page-header-bleed-right">
-          <div class="actions pull-right">
-            <a href="#"><span class="pficon pficon-refresh"></span> Refresh Results</a>
+<div class="list-group list-view-pf list-view-pf-view">
+  <div class="col-md-12 col-md-12 col-sm-12">
+    <!-- Page Header -->
+    <div class="page-header page-header-bleed-right">
+      <div class="actions pull-right">
+        <a href="#!sharedimports"><span class="pficon pficon-refresh"></span> Refresh Results</a>
+      </div>
+      <h1><strong>{{ header | uppercase }}</strong></h1>
+    </div><!-- End Page Header -->
+  </div>
+
+  <!-- List View -->
+  <div class="list-group list-view-pf" ng-show="sharedimports && sharedimports.length>0" id="importsList">
+
+    <div class="col-md-4 col-lg-4 col-sm-6">
+      <!--          <span> FILTER: </span><input type="search" ng-model="q" placeholder="filter names..." aria-label="filter imports" />-->
+      <form role="form" class="search-pf has-button">
+        <div class="form-group has-clear">
+          <div class="search-pf-input-group">
+            <label for="search1" class="sr-only">Search</label>
+            <input ng-model="q" placeholder="filter names..." aria-label="filter imports" id="search1" type="search"
+                   class="form-control">
+            <button type="button" class="clear" aria-hidden="true"><span class="pficon pficon-close"></span></button>
           </div>
-          <h1>Shared Imports Validation</h1>
         </div>
-      </div><!-- End Page Header -->
-
-      <!-- List View -->
-      <div class="list-group list-view-pf"  ng-show="sharedimports && sharedimports.length>0" id="importsList">
-
-        <div data-link="#" class="list-group-item" ng-repeat="import in sharedimports" ng-click="showDetail(sharedimport.id)" ng-class-odd="'bg-light'">
-          <a href="#" class="list-group-item-link"></a>
-          <div class="list-view-pf-checkbox">
-            <input type="checkbox">
-          </div>
-          <div class="list-view-pf-actions">
-            <button class="btn btn-default">Action</button>
-            <div class="dropdown pull-right dropdown-kebab-pf">
-              <button class="btn btn-link dropdown-toggle" type="button" id="dropdownKebabRight" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="true">
-                <span class="fa fa-ellipsis-v"></span>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownKebabRight">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
-                <li><a href="#">Separated link</a></li>
-              </ul>
+        <div class="form-group">
+          <button class="btn btn-default" type="button"><span class="fa fa-search"></span></button>
+        </div>
+      </form>
+    </div>
+    <hr class="col-lg-12 col-md-12 col-sm-12" />
+    <div data-link="#" class="list-group-item col-md-12 col-lg-12 col-sm-12"
+         ng-repeat="import in sharedimports | startFrom:(pageNumber - 1)*pageSize | limitTo:pageSize | filter:q as results track by import.id"
+         ng-click="showDetail(import.id)" ng-class-odd="'bg-light'">
+      <a href="#" class="list-group-item-link"></a>
+      <div class="list-view-pf-actions">
+        <button class="btn btn-info" ng-click="rescanSharedImport(import)">Scan</button>
+      </div>
+      <div class="list-view-pf-main-info">
+        <div class="list-view-pf-left">
+          <span ng-if='import.checksums && import.pathmatch'
+                class="pficon pficon-ok list-view-pf-icon-md list-view-pf-icon-success"></span>
+          <span ng-if='(!import.checksums && import.pathmatch) || (import.checksums && !import.pathmatch)'
+                class="pficon pficon-warning-triangle-o list-view-pf-icon-md list-view-pf-icon-warning"></span>
+          <span ng-if='!import.checksums && !import.pathmatch'
+                class="pficon pficon-error-circle-o list-view-pf-icon-md list-view-pf-icon-danger"></span>
+          <span ng-if='import.count == 0'
+                class="pficon pficon-add-circle-o list-view-pf-icon-md list-view-pf-icon-info"></span>
+        </div>
+        <div class="list-view-pf-body">
+          <div class="list-view-pf-description">
+            <div class="list-group-item-heading">
+              {{ import.id | uppercase }}
+            </div>
+            <div class="list-group-item-text">
+              <!-- {{import.storekey}} --> <a href="#!downloads/{{import.id}}">show downloads</a>.
             </div>
           </div>
-          <div class="list-view-pf-main-info">
-            <div class="list-view-pf-left">
-              <span class="fa fa-plane list-view-pf-icon-sm"></span>
+          <div class="list-view-pf-additional-info">
+            <div class="list-view-pf-additional-info-item">
+              <span class="pficon pficon-screen"></span>
+              <strong>{{ import.pathmatch ? "TRUE" : "FALSE" }}</strong>pathmatch's
             </div>
-            <div class="list-view-pf-body">
-              <div class="list-view-pf-description">
-                <div class="list-group-item-heading">
-                  {{import.id}}
-                </div>
-                <div class="list-group-item-text">
-                  {{repo.storekey}} <a href="#">repository</a>.
-                </div>
-              </div>
-              <div class="list-view-pf-additional-info">
-                <div class="list-view-pf-additional-info-item">
-                  <span class="pficon pficon-screen"></span>
-                  <strong>Pathmatch</strong>{{import.pathmatch}}
-                </div>
-                <div class="list-view-pf-additional-info-item">
-                  <span class="pficon pficon-cluster"></span>
-                  <strong>Checksum</strong>{{import.checksum}}
-                </div>
-                <div class="list-view-pf-additional-info-item">
-                  <span class="pficon pficon-container-node"></span>
-                  <strong>Path</strong>{{import.path}}
-                </div>
-                <div class="list-view-pf-additional-info-item">
-                  <span class="pficon pficon-image"></span>
-                  <strong>md5</strong>{{import.md5}}
-                </div>
-              </div>
+            <div class="list-view-pf-additional-info-item">
+              <span class="pficon pficon-cluster"></span>
+              <strong>{{ import.checksums ? "TRUE" : "FALSE" }}</strong>checksum's
+            </div>
+            <div class="list-view-pf-additional-info-item">
+              <span class="pficon pficon-container-node"></span>
+              <strong>{{ import.count }}</strong> downloads
             </div>
           </div>
-        </div><!-- list-group-item -->
-
-      </div><!-- End List View -->
-      
-
+        </div>
+      </div>
+    </div><!-- list-group-item -->
+  </div><!-- End List View -->
+  <div ng-if="sharedimports.length==0" class="spinner spinner-lg" style="position: absolute;height: 100px;width: 100px;top: 50%;left: 50%;margin-left: -50px;margin-top: -50px;background-size: 100%;"></div>
+  <div class="col-md-12 col-md-12 col-sm-12" ng-show="sharedimports && sharedimports.length>0">
+    <!-- Pagination -->
+    <pf-pagination
+      page-size="pageSize"
+      page-number="pageNumber"
+      num-total-items="numTotalItems"
+      page-size-increments="pageSizeIncrements">
+    </pf-pagination>
+    <!-- End Pagination -->
+  </div>
 </div>
+

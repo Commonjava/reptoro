@@ -19,16 +19,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 public class ContentProcessingServiceImpl implements ContentProcessingService {
 
@@ -84,6 +83,8 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
 
         Cluster build = cassandraClientOptions
                 .dataStaxClusterBuilder()
+                .withoutJMXReporting()
+                .withoutMetrics()
                 .withPort(port)
                 .withCredentials(user, pass)
                 .addContactPoint(cassandraHostname)
@@ -93,6 +94,8 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
         cassandraClientOptions
                 .setKeyspace(cassandraKeyspace)
                 .dataStaxClusterBuilder()
+                .withoutJMXReporting()
+                .withoutMetrics()
                 .withPort(port)
                 .withCredentials(user, pass)
                 .addContactPoint(cassandraHostname);
@@ -103,6 +106,8 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
         cassandraReptoroClientOptions
                 .setKeyspace(reptoroKeyspace)
                 .dataStaxClusterBuilder()
+                .withoutJMXReporting()
+                .withoutMetrics()
                 .withPort(port)
                 .withCredentials(user, pass)
                 .addContactPoint(cassandraHostname);
@@ -367,4 +372,75 @@ public class ContentProcessingServiceImpl implements ContentProcessingService {
         });
 
     }
+
+  @Override
+  public void getRemoteRepositoryContentsCount(Handler<AsyncResult<JsonObject>> handler) {
+    String query = "SELECT COUNT(*) FROM reptoro.contents ALLOW FILTERING;";
+
+    cassandraReptoroClient.execute(query , res -> {
+      if(res.succeeded()) {
+
+        io.vertx.cassandra.ResultSet result = res.result();
+        result.one(rowResult -> {
+          Row row = rowResult.result();
+          long count = row.getLong("count");
+          handler.handle(Future.succeededFuture(new JsonObject().put("count", count)));
+        });
+      } else {
+        logger.info("FAILURE: " + res.cause());
+        handler.handle(Future.failedFuture(res.cause()));
+      }
+
+    });
+
+  }
+
+  @Override
+  public void getRemoteRepositoryValidationCount(String key, Handler<AsyncResult<JsonObject>> handler) {
+    String query = "SELECT checksum,sourceheaders FROM reptoro.contents WHERE filesystem='" + key + "' ALLOW FILTERING;";
+
+    cassandraReptoroClient.execute(query , res -> {
+      if(res.succeeded()) {
+        io.vertx.cassandra.ResultSet result = res.result();
+
+        result.all(rowResult -> {
+          List<Row> results = rowResult.result();
+          Iterator<Row> rows = results.iterator();
+
+          JsonArray checksumsArr = new JsonArray();
+          JsonArray sourceHeaderArr = new JsonArray();
+          JsonArray checksumHeaderArr = new JsonArray();
+
+          while (rows.hasNext()) {
+            Row row = rows.next();
+            sourceHeaderArr.add(row.getString("sourceheaders"));
+            checksumsArr.add(row.getString("checksum"));
+            checksumHeaderArr.add(new JsonObject().put("checksum", row.getString("checksum")).put("headers", row.getString("sourceheaders")));
+          }
+
+          Stream<String> matched = checksumsArr.stream().map(value -> String.valueOf(value));
+          long matchedCount = matched.map(value -> Boolean.valueOf(value)).filter(value -> {return !value;}).count();
+
+          long notmatchedCount =
+            checksumHeaderArr.stream()
+              .map(el -> new JsonObject(el.toString()))
+              .filter(el -> !el.getString("headers").equalsIgnoreCase("{}"))
+              .filter(el -> el.getString("checksum").equalsIgnoreCase("false"))
+              .count();
+
+          Stream<JsonObject> compared = sourceHeaderArr.stream().map(value -> String.valueOf(value)).map(value -> new JsonObject(value));
+          long comparedCount = compared.filter(value -> {return value.isEmpty();}).count();
+
+          JsonObject validationJson =
+            new JsonObject().put("count", checksumsArr.size()).put("matched", matchedCount)
+              .put("notmatched", notmatchedCount).put("compared", comparedCount);
+          handler.handle(Future.succeededFuture(validationJson));
+        });
+      } else {
+        logger.info("FAILURE: " + res.cause());
+        handler.handle(Future.failedFuture(res.cause()));
+      }
+
+    });
+  }
 }
