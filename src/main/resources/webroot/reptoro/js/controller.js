@@ -233,7 +233,7 @@ reptoroApp.controller('AdminCtrl', ['$scope', '$http', '$templateCache', '$route
       eventbus.registerHandler('monitor.metrics', (err, message) => {
         var res = message.body;
 
-        // console.log(res);
+         console.log(res);
 
         if (res != null) {
           if(res.count) {
@@ -251,8 +251,8 @@ reptoroApp.controller('AdminCtrl', ['$scope', '$http', '$templateCache', '$route
           } else {
             $scope.metrics = res;
             var time = (new Date()).getTime();
-            // $scope.eventsPublished = res['vertx.eventbus.messages.published'].count;
-            $scope.eventsPublished = res['vertx.pools.worker.vert.x-internal-blocking.usage'].count ;
+             $scope.eventsPublished = res['vertx.eventbus.messages.published'].count;
+//            $scope.eventsPublished = res['vertx.pools.worker.vert.x-internal-blocking.usage'].count ;
             $scope.eventsData.yData.push($scope.eventsPublished);
             $scope.eventsData.xData.push(Date.now());
 

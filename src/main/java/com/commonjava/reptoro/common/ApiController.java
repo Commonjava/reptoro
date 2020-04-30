@@ -113,7 +113,7 @@ public class ApiController extends AbstractVerticle {
 
     // send metrics message to the event bus
     MetricsService metricsService = MetricsService.create(vertx);
-    vertx.setPeriodic(10000, t -> {
+    vertx.setPeriodic(TimeUnit.SECONDS.toMillis(10), t -> {
       JsonObject metrics = metricsService.getMetricsSnapshot(vertx);
       vertx.eventBus().publish(Topics.VERTX_METRICS, metrics);
     });
@@ -199,6 +199,9 @@ public class ApiController extends AbstractVerticle {
       .requestHandler(router)
       .listen(config().getJsonObject("reptoro").getInteger("api.gateway.http.port",PORT));
   }
+
+
+
 
   private void handleSharedImportDownloads(RoutingContext context) {
     @Nullable String buildId = context.request().getParam("id");

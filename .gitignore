@@ -186,15 +186,4 @@ nbdist/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Intellij
-.idea/
-*.iml
-*.iws
-
-.classpath
-.editorconfig
-.mvn/
-.git/
-.project
-.vscode
 
