@@ -67,6 +67,13 @@ public class ApiController extends AbstractVerticle {
   public static final String API_REPOS_COUNT = "/reptoro/repos/count";
   public static final String API_SHAREDIMPORT_CONTENT_COUNT = "/reptoro/imports/contents/count";
   public static final String API_SHAREDIMPORT_COUNT = "/reptoro/imports/count";
+  public static final String API_REPOSITORY_CHANGE = "/reptoro/repo/change";
+  public static final String API_REPOSITORY_REVERSE = "/reptoro/repo/reverse";
+  public static final String API_REPOSITORY_SCAN = "/reptoro/repo/scan";
+  public static final String API_SHAREDIMPORT_SCAN = "/reptoro/import/scan";
+  public static final String API_SHAREDIMPORT_DOWNLOADS_FROM_BUILDID = "/reptoro/import/downloads/:id";
+
+
 
   private OAuth2Auth oAuth2Auth;
   private JsonObject config;
@@ -169,16 +176,16 @@ public class ApiController extends AbstractVerticle {
     router.get(API_REPOS_NOTVALIDATED_COUNT).handler(this::handleNotValidatedRemoteRepositories);
     router.get(API_REPOS_CONTENT_COUNT).handler(this::handleGetRemoteRepoContentCount);
     router.get(API_REPOS_COUNT).handler(this::handleRemoteRepoCount);
-    router.post("/reptoro/repo/change").handler(this::handleRemoteRepoChange);
-    router.post("/reptoro/repo/reverse").handler(this::handleRemoteRepoReverse);
-    router.post("/reptoro/repo/scan").handler(this::handleRemoteRepoRescan);
+    router.post(API_REPOSITORY_CHANGE).handler(this::handleRemoteRepoChange);
+    router.post(API_REPOSITORY_REVERSE).handler(this::handleRemoteRepoReverse);
+    router.post(API_REPOSITORY_SCAN).handler(this::handleRemoteRepoRescan);
 
     router.get(API_SHAREDIMPORTS_ALL).handler(this::handleGetAllSharedImports);
     router.get(API_IMPORTS_NOTVALIDATED_COUNT).handler(this::handleNotValidatedSharedImports);
     router.get(API_SHAREDIMPORT_CONTENT_COUNT).handler(this::handleSharedImportContentCount);
     router.get(API_SHAREDIMPORT_COUNT).handler(this::handleSharedImportsCount);
-    router.post("/reptoro/import/scan").handler(this::handleSharedImportRescan);
-    router.get("/reptoro/import/downloads/:id").handler(this::handleSharedImportDownloads);
+    router.post(API_SHAREDIMPORT_SCAN).handler(this::handleSharedImportRescan);
+    router.get(API_SHAREDIMPORT_DOWNLOADS_FROM_BUILDID).handler(this::handleSharedImportDownloads);
 
     // start repos or imports process
     router.post(API_PROCESS_START).handler(this::handleStartProcess);
