@@ -13,6 +13,11 @@ pipeline {
                 sh 'printenv'
             }
         }
+        stage('Clean Up') {
+            steps {
+                sh 'oc delete all -l app=reptoro'
+            }
+        }
         stage('Build') {
             steps {
 //                 sh 'mvn -B -V clean verify'
