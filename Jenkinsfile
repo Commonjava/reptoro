@@ -15,13 +15,19 @@ pipeline {
         }
         stage('Clean Up') {
             steps {
-                sh 'oc delete all -l app=reptoro'
+                sh 'oc delete src,svc,dc,bc,route -l app=reptoro'
             }
         }
         stage('Build') {
             steps {
 //                 sh 'mvn -B -V clean verify'
                 sh 'rm -rf src/main/generated/com && mvn clean install'
+            }
+        }
+        stage('Create') {
+            steps {
+                sh 'oc expose dc reptoro --port=8080'
+                sh 'oc expose service reptoro'
             }
         }
         stage('Load OCP Mappings') {
