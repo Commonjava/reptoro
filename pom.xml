@@ -322,7 +322,7 @@
         <configuration>
           <generateRoute>true</generateRoute>
           <enableImageChangeTrigger>true</enableImageChangeTrigger>
-          <enableAutomaticTrigger>true</enableAutomaticTrigger>
+<!--          <enableAutomaticTrigger>true</enableAutomaticTrigger>-->
           <!--<resourceDir>./src/main/resources</resourceDir>-->
           <!--                    <resourceDir>src/main/resources</resourceDir>-->
           <!--                    <enableImageChangeTrigger>true</enableImageChangeTrigger>-->
