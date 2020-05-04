@@ -15,7 +15,8 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'mvn -B -V clean verify'
+//                 sh 'mvn -B -V clean verify'
+                sh 'mvn clean install'
             }
         }
         stage('Load OCP Mappings') {
@@ -69,8 +70,7 @@ pipeline {
             }
             steps {
                 echo "Deploy"
-//                 sh 'mvn help:effective-settings -B -V deploy -e'
-                    sh 'mvn clean install'
+                sh 'mvn help:effective-settings -B -V deploy -e'
             }
         }
         stage('Archive') {
