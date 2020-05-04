@@ -15,7 +15,7 @@ pipeline {
         }
         stage('Clean Up') {
             steps {
-                sh 'oc delete svc,dc,bc,route -l app=reptoro'
+                sh 'oc delete svc,dc,route -l app=reptoro'
             }
         }
         stage('Build') {
