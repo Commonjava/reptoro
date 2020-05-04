@@ -226,14 +226,16 @@ reptoroApp.controller('AdminCtrl', ['$scope', '$http', '$templateCache', '$route
           var timeMilis = time.getTime();
           $scope.appLogs = $scope.appLogs + "["+ time.toGMTString() +"] " + JSON.stringify(event.msg) + "\n";
           // store application logs to session storage...
-          sessionStorage.setItem('appLogs',$scope.appLogs);
+          if(sessionStorage.getItem('appLogs') == '') {
+            sessionStorage.setItem('appLogs',$scope.appLogs);
+          }
           $scope.$apply();
         }
       });
       eventbus.registerHandler('monitor.metrics', (err, message) => {
         var res = message.body;
 
-         console.log(res);
+         // console.log(res);
 
         if (res != null) {
           if(res.count) {
@@ -249,16 +251,20 @@ reptoroApp.controller('AdminCtrl', ['$scope', '$http', '$templateCache', '$route
               }
             }
           } else {
-            $scope.metrics = res;
-            var time = (new Date()).getTime();
-             $scope.eventsPublished = res['vertx.eventbus.messages.published'].count;
+            if(res['vertx.verticles'] || res['vertx.timers']) {
+              $scope.metrics = res;
+              var time = (new Date()).getTime();
+              $scope.eventsPublished = res['vertx.eventbus.messages.published'].count;
 //            $scope.eventsPublished = res['vertx.pools.worker.vert.x-internal-blocking.usage'].count ;
-            $scope.eventsData.yData.push($scope.eventsPublished);
-            $scope.eventsData.xData.push(Date.now());
-
-            $scope.discardedMesgs = res['vertx.eventbus.messages.discarded'].count;
-            $scope.lineChartData.xData.push(Date.now());
-            $scope.lineChartData.yData0.push($scope.discardedMesgs);
+              $scope.eventsData.yData.push($scope.eventsPublished);
+              $scope.eventsData.xData.push(Date.now());
+              $scope.discardedMesgs = res['vertx.eventbus.messages.discarded'].count;
+              $scope.lineChartData.xData.push(Date.now());
+              $scope.lineChartData.yData0.push($scope.discardedMesgs);
+            } else {
+              console.log("Unknown msg:");
+              console.log(res);
+            }
           }
 
           $scope.$apply();

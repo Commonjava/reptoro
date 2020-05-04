@@ -124,10 +124,7 @@ public class ProcessingContentVerticle extends AbstractVerticle {
 
         } else {
           logger.info("GETTING ALL HEADERS FAILED." );
-          // TODO Send this repo to waiting or post-processing queue???
-
           // for now we will just change repo stage to this repo in problematic and start process next one...
-
           changeRepositoryStateToPromlematic(contentsObj.getString("key"))
             .onComplete(update -> {
               if (update.succeeded()) {
@@ -148,10 +145,8 @@ public class ProcessingContentVerticle extends AbstractVerticle {
       changeRepositoryStateToFinish(contentsObj.getString("key"))
         .onComplete(res -> {
           if (res.succeeded()) {
-            // send it for protocol change
-            // TODO create change protocol verticle...
             if (Objects.nonNull(res.result())) {
-              vertx.eventBus().send(Topics.CHANGE_PROTOCOL, new JsonObject().put("repokey", contentsObj.getString("key")));
+//              vertx.eventBus().send(Topics.CHANGE_PROTOCOL, new JsonObject().put("repokey", contentsObj.getString("key")));
               // send msg for next repo "REPO_GET_ONE"
               vertx.eventBus().send(Topics.REPO_GET_ONE, new JsonObject().put("type", "maven"));
 

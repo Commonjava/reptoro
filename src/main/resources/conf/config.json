@@ -35,14 +35,14 @@
   },
   "keycloak": {
     "realm": "pncredhat",
-    "auth-server-url": "https://secure-sso-newcastle-stage.psi.redhat.com/auth",
+    "auth-server-url": "https://secure-sso-newcastle-stage.apps.ocp.prod.psi.redhat.com/auth",
     "ssl-required": "none",
     "resource": "reptoro",
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
     "confidential-port": 0,
     "credentials": {
-      "secret": ""
+      "secret": "f599ca7d-9dfb-460e-9731-dc9b250fbf5d"
     }
   }
 }

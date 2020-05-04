@@ -44,7 +44,6 @@ import static io.vertx.core.http.HttpHeaders.LOCATION;
 
 public class ApiController extends AbstractVerticle {
 
-
   Logger logger = Logger.getLogger(this.getClass().getName());
 
   private static final int PORT = 8080;
@@ -153,7 +152,11 @@ public class ApiController extends AbstractVerticle {
 
     logger.info(keycloakConfig.encodePrettily());
 
-    HttpClientOptions httpClientOptions = new HttpClientOptions().setSsl(true).setVerifyHost(false).setTrustAll(true);
+    HttpClientOptions httpClientOptions = new HttpClientOptions()
+        .setSsl(true)
+        .setVerifyHost(false)
+        .setTrustAll(true)
+        ;
 
     oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakConfig,httpClientOptions);
 
@@ -304,8 +307,6 @@ public class ApiController extends AbstractVerticle {
       } else {
         JsonObject opResult = res.result();
         if(opResult.getInteger("statuscode") == 200) {
-          // TODO Change DB repo with new protocol
-
           vertx.eventBus().<JsonObject>request(Topics.REPO_UPDATE, opResult.getJsonObject("result"), rspn -> {
             if(rspn.failed()) {
               logger.info(rspn.cause().getLocalizedMessage());
@@ -364,8 +365,6 @@ public class ApiController extends AbstractVerticle {
 
         JsonObject opResult = res.result();
         if(opResult.getInteger("statuscode") == 200) {
-          // TODO Change DB repo with new protocol
-
           vertx.eventBus().<JsonObject>request(Topics.REPO_UPDATE, opResult.getJsonObject("result"), rspn -> {
             if(rspn.failed()) {
               logger.info(rspn.cause().getLocalizedMessage());
