@@ -16,7 +16,7 @@ pipeline {
         stage('Build') {
             steps {
 //                 sh 'mvn -B -V clean verify'
-                sh 'mvn clean install'
+                sh 'rm -rf src/main/generated/com && mvn clean install'
             }
         }
         stage('Load OCP Mappings') {
