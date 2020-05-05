@@ -15,6 +15,8 @@ COPY maven /deployments/
 #COPY maven/paas_psi_redhat_com.crt /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crts
 #RUN cd /etc/pki/ca-trust/source/anchors && update-ca-trust enable && update-ca-trust extract
 
+#ENV jdk.tls.client.cipherSuites true
+
 RUN cd /etc/pki/ca-trust/source/anchors && \
     curl -O --insecure https://password.corp.redhat.com/RH-IT-Root-CA.crt && \
     curl -O --insecure https://password.corp.redhat.com/legacy.crt && \
