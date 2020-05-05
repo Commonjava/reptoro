@@ -4,7 +4,7 @@ FROM registry.redhat.io/redhat-openjdk-18/openjdk18-openshift
 ENV JAVA_APP_DIR=/deployments JAVA_OPTIONS="-Dvertx.cacheDirBase=/tmp -Dvertx.disableDnsResolver=true"
 LABEL org.label-schema.description="" org.label-schema.version=1.0.0-SNAPSHOT org.label-schema.schema-version=1.0 org.label-schema.build-date=2020-02-26T12:14:12.656 org.label-schema.name=reptoro org.label-schema.vcs-ref=6a027fe935ab79adfefe54966d7182eb727d71c9 org.label-schema.vcs-url=https://github.com/geored/reptoro.git
 EXPOSE 8080 8778 9779
-#USER root
+USER root
 COPY maven /deployments/
 #RUN cd /etc/pki/ca-trust/source/anchors
 #RUN curl -O https://password.corp.redhat.com/RH-IT-Root-CA.crt
@@ -14,11 +14,11 @@ COPY maven /deployments/
 #COPY maven/paas_psi_redhat_com.crt /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crts
 #RUN cd /etc/pki/ca-trust/source/anchors && update-ca-trust enable && update-ca-trust extract
 
-#RUN cd /etc/pki/ca-trust/source/anchors && \
-#    curl -O --insecure https://password.corp.redhat.com/RH-IT-Root-CA.crt && \
-#    curl -O --insecure https://password.corp.redhat.com/legacy.crt && \
-#    curl -O --insecure https://engineering.redhat.com/Eng-CA.crt && \
-#    update-ca-trust extract
+RUN cd /etc/pki/ca-trust/source/anchors && \
+    curl -O --insecure https://password.corp.redhat.com/RH-IT-Root-CA.crt && \
+    curl -O --insecure https://password.corp.redhat.com/legacy.crt && \
+    curl -O --insecure https://engineering.redhat.com/Eng-CA.crt && \
+    update-ca-trust extract
 
 #RUN cd $JAVA_HOME/lib/security \
 #    && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias redhatcert -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
@@ -29,8 +29,8 @@ COPY maven /deployments/
 #RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Red_Hat_IS_CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 #RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 
-#RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Eng-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
-#RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/legacy.crt -keystore $JAVA_HOME/lib/security/cacerts
-#RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Eng-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/legacy.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 #
-#USER 1001
+USER 1001
