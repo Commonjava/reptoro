@@ -33,4 +33,4 @@ COPY maven /deployments/
 #RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/legacy.crt -keystore $JAVA_HOME/lib/security/cacerts
 #RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 #
-#USER 1001
+USER 1001
