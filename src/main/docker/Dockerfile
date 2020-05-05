@@ -1,5 +1,5 @@
 #FROM fabric8/s2i-java:2.3
-FROM docker.io/indyperf/ubi-s2i-jdk8:latest
+FROM quay.io/factory2/ubi-s2i-jdk8:latest
 #FROM radanalyticsio/ubi-jre-1.8.0-minimal
 ENV JAVA_APP_DIR=/deployments JAVA_OPTIONS="-Dvertx.cacheDirBase=/tmp -Dvertx.disableDnsResolver=true"
 LABEL org.label-schema.description="" org.label-schema.version=1.0.0-SNAPSHOT org.label-schema.schema-version=1.0 org.label-schema.build-date=2020-02-26T12:14:12.656 org.label-schema.name=reptoro org.label-schema.vcs-ref=6a027fe935ab79adfefe54966d7182eb727d71c9 org.label-schema.vcs-url=https://github.com/geored/reptoro.git
