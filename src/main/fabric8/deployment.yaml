@@ -10,7 +10,7 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.namespace
             - name: JAVA_OPTIONS
-              value: '-Xms4G -Xmx4G -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=4 -XX:MaxRAMFraction=2 -XX:ParallelGCThreads=20 -XX:ConcGCThreads=5 -XX:InitiatingHeapOccupancyPercent=70 -Dvertx.cacheDirBase=/tmp -Djavax.net.debug=ssl:handshake:verbose:keymanager:trustmanager -Djava.security.debug=access:stack'
+              value: '-Xms4G -Xmx4G -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:InitialRAMFraction=4 -XX:MaxRAMFraction=2 -XX:ParallelGCThreads=20 -XX:ConcGCThreads=5 -XX:InitiatingHeapOccupancyPercent=70 -Dvertx.cacheDirBase=/tmp ‑Djdk.tls.client.protocols="TLSv1,TLSv1.1,TLSv1.2" -Djavax.net.debug=ssl:handshake:verbose:keymanager:trustmanager -Djava.security.debug=access:stack'
 #          -Djavax.net.debug=ssl:handshake:verbose:keymanager:trustmanager -Djava.security.debug=access:stack
           resources:
             limits:
