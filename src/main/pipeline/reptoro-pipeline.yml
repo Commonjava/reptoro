@@ -1,0 +1,20 @@
+kind: BuildConfig
+apiVersion: v1
+metadata:
+    name: reptoro-pipeline
+    labels:
+        app: reptoro
+spec:
+    resources:
+        requests:
+            cpu: 2000Mi
+            memory: 1G
+    source:
+        git:
+            ref: master
+            uri: "https://github.com/geored/reptoro.git"
+        type: git
+    strategy:
+        type: JenkinsPipeline
+        jenkinsPipelineStrategy:
+            jenkinsFilePath: Jenkinsfile

@@ -207,6 +207,7 @@ public class ApiController extends AbstractVerticle {
     router.route(STATIC_CONTENT).handler(StaticHandler.create());
 
 
+
     router.route(TEST).handler(this::handleTest);
 
     server
