@@ -42,7 +42,7 @@
     "use-resource-role-mappings": true,
     "confidential-port": 0,
     "credentials": {
-      "secret": ""
+      "secret": "f599ca7d-9dfb-460e-9731-dc9b250fbf5d"
     }
   }
 }
