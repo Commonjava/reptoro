@@ -14,6 +14,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.oauth2.KeycloakHelper;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
@@ -173,6 +174,9 @@ public class ApiController extends AbstractVerticle {
     // handle request data as json object
     router.route().handler(BodyHandler.create());
 
+    // logging of user requests
+    router.route().handler(LoggerHandler.create());
+
     router.route(API_REPTORO_PROTECTED).handler(oAuth2AuthHandler1);
 
     router.get(API_REPOSITORY_ALL).handler(this::handleGetAllRepositories);
@@ -209,8 +213,6 @@ public class ApiController extends AbstractVerticle {
       .requestHandler(router)
       .listen(config().getJsonObject("reptoro").getInteger("api.gateway.http.port",PORT));
   }
-
-
 
 
   private void handleSharedImportDownloads(RoutingContext context) {
