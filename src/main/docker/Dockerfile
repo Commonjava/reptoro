@@ -1,7 +1,8 @@
 #FROM fabric8/s2i-java:2.3
-#FROM registry.redhat.io/redhat-openjdk-18/openjdk18-openshift
-FROM quay.io/factory2/s2i-reptoro-build:latest
-ENV JAVA_APP_DIR=/deployments
+FROM registry.redhat.io/redhat-openjdk-18/openjdk18-openshift
+#FROM quay.io/factory2/s2i-reptoro-build:latest
+ENV JAVA_APP_DIR=/deployments \
+    JAVA_OPTIONS="-Dvertx.cacheDirBase=/tmp -Dvertx.disableDnsResolver=true"
 # -Dvertx.disableDnsResolver=true
 LABEL org.label-schema.description="" \
         org.label-schema.version=1.0.0-SNAPSHOT \
