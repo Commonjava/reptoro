@@ -52,9 +52,9 @@ pipeline {
         }
         stage('Create') {
             steps {
-                sh 'oc expose dc reptoro --port=8080'
-                sh 'oc expose service reptoro'
-                sh 'oc set triggers dc/reptoro --from-image=${openshift.project()}/reptoro:latest -c vertx'
+                sh "oc expose dc reptoro --port=8080"
+                sh "oc expose service reptoro"
+                sh "oc set triggers dc/reptoro --from-image=newcastle-stage/reptoro:latest -c vertx"
             }
         }
         stage('Run tests') {
