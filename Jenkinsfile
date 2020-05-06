@@ -52,9 +52,9 @@ pipeline {
         }
         stage('Create') {
             steps {
-                sh "oc expose dc reptoro --port=8080"
-                sh "oc expose service reptoro"
-                sh "oc set triggers dc/reptoro --from-image=newcastle-stage/reptoro:latest -c vertx"
+                sh "oc expose dc ${appName} --port=8080"
+                sh "oc expose service ${appName}"
+                sh "oc set triggers dc/${appName} --from-image=${openshift.project()}/${appName}:latest -c vertx"
             }
         }
         stage('Run tests') {
@@ -64,7 +64,7 @@ pipeline {
                                 script {
                                     openshift.withCluster() {
                                         openshift.withProject() {
-                                            openshift.selector('dc','reptoro').describe()
+                                            openshift.selector('dc',appName).describe()
                                         }
                                     }
                                 }
@@ -76,7 +76,7 @@ pipeline {
                                 script {
                                     openshift.withCluster() {
                                         openshift.withProject() {
-                                            openshift.selector('svc','reptoro').describe()
+                                            openshift.selector('svc',appName).describe()
                                         }
                                     }
                                 }
