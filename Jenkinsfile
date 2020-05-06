@@ -46,15 +46,15 @@ pipeline {
         }
         stage('Build') {
             steps {
-//                 sh 'mvn -B -V clean verify'
-                sh 'rm -rf src/main/generated/src && mvn clean install'
+//                 'sh 'mvn -B -V clean verify'
+                sh "mvn clean install"
             }
         }
         stage('Create') {
             steps {
-                sh "oc expose dc ${appName} --port=8080"
-                sh "oc expose service ${appName}"
-                sh "oc set triggers dc/${appName} --from-image=${openshift.project()}/${appName}:latest -c vertx"
+                sh "oc expose dc reptoro --port=8080"
+                sh "oc expose service reptoro"
+                sh "oc set triggers dc/reptoro --from-image=newcastle-stage/reptoro:latest -c vertx"
             }
         }
         stage('Run tests') {
