@@ -22,6 +22,10 @@ public interface ContentProcessingService {
 
     void getContentsFromDb(JsonObject repo,Handler<AsyncResult<JsonObject>> handler );
 
+    void getRemoteRepositoryContentsCount(Handler<AsyncResult<JsonObject>> handler);
+
+    void getRemoteRepositoryValidationCount(String key,Handler<AsyncResult<JsonObject>> handler);
+
     @GenIgnore
     static ContentProcessingService createProxy(Vertx vertx, String address) {
         return new ContentProcessingServiceVertxEBProxy(vertx,address);

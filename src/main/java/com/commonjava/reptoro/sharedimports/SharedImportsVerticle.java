@@ -1,14 +1,8 @@
 package com.commonjava.reptoro.sharedimports;
 
 import com.commonjava.reptoro.common.Const;
-import com.commonjava.reptoro.common.Topics;
-import com.commonjava.reptoro.remoterepos.RemoteRepositoryService;
-import com.commonjava.reptoro.remoterepos.RemoteRepositoryServiceImpl;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;

@@ -2,7 +2,7 @@ def artifact="target/reptoro-*-fat.jar"
 
 def ocp_map = '/mnt/ocp/jenkins-openshift-mappings.json'
 def bc_section = 'build-configs'
-
+def appName = 'reptoro'
 def my_bc = null
 
 pipeline {
@@ -13,10 +13,76 @@ pipeline {
                 sh 'printenv'
             }
         }
+        stage('preamble') {
+                steps {
+                    script {
+                        openshift.withCluster() {
+                            openshift.withProject() {
+                                echo "Using project: ${openshift.project()}"
+                            }
+                        }
+                    }
+                }
+        }
+        stage('Clean Up') {
+            steps {
+//                 sh 'oc delete svc,dc,route -l app=reptoro'
+                script {
+                    openshift.withCluster() {
+                        openshift.withProject() {
+                            if(openshift.selector('dc',[app:appName]).exists()) {
+                                openshift.selector( 'dc',[ app:appName ]).delete()
+                            }
+                            if(openshift.selector('svc',[app:appName]).exists()) {
+                                openshift.selector('svc',[app:appName]).delete()
+                            }
+                            if(openshift.selector('route',[app:appName]).exists()) {
+                                openshift.selector('route',[app:appName]).delete()
+                            }
+                        }
+                    }
+                }
+            }
+        }
         stage('Build') {
             steps {
-                sh 'mvn -B -V clean verify'
+//                 sh 'mvn -B -V clean verify'
+                sh 'mvn clean install'
             }
+        }
+        stage('Create') {
+            steps {
+                sh "oc expose dc reptoro --port=8080"
+                sh "oc expose service reptoro"
+                sh "oc set triggers dc/reptoro --from-image=newcastle-stage/reptoro:latest -c vertx"
+            }
+        }
+        stage('Run tests') {
+                    parallel {
+                        stage('Test run 1') {
+                            steps {
+                                script {
+                                    openshift.withCluster() {
+                                        openshift.withProject() {
+                                            openshift.selector('dc','reptoro').describe()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        stage('Test run 2') {
+                            steps {
+                                script {
+                                    openshift.withCluster() {
+                                        openshift.withProject() {
+                                            openshift.selector('svc','reptoro').describe()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
         }
         stage('Load OCP Mappings') {
             when {

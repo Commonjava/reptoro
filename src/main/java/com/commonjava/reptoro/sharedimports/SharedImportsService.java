@@ -21,7 +21,7 @@ public interface SharedImportsService {
 
   void getSealedRecordRaport(String buildId, Handler<AsyncResult<JsonObject>> handler);
 
-  void checkSharedImportInDb(String buildId, Handler<AsyncResult<JsonObject>> handler);
+  void checkSharedImportInDb(String buildId, Handler<AsyncResult<Boolean>> handler);
 
   void getSharedImportContent(String path , Handler<AsyncResult<JsonObject>> handler);
 
@@ -30,6 +30,16 @@ public interface SharedImportsService {
   void getOriginUrlHeaders(String originUrl , Handler<AsyncResult<JsonObject>> handler);
 
   void getAllSharedImportsFromDb(Handler<AsyncResult<JsonArray>> handler);
+
+  void getNotComparedSharedImportsFromDB(Handler<AsyncResult<JsonObject>> handler);
+
+  void getSharedImportContentCount(Handler<AsyncResult<JsonObject>> handler);
+
+  void getSharedImportCount(Handler<AsyncResult<JsonArray>> handler);
+
+  void getSharedImportDownloads(String buildId , Handler<AsyncResult<JsonObject>> handler);
+
+  void getDownloads(String buildId,Handler<AsyncResult<JsonObject>> handler);
 
   @GenIgnore
   static SharedImportsService createProxy(Vertx vertx, String address) {

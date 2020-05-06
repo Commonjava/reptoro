@@ -186,3 +186,6 @@ nbdist/
 !.vscode/launch.json
 !.vscode/extensions.json
 
+### Ignore Generated dir
+src/main/generated/*
+src/main/generated

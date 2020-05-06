@@ -52,7 +52,7 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
     JsonObject body = tMessage.body();
 
     // publish to client:
-    vertx.eventBus().publish(Topics.CLIENT_TOPIC,body);
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg",body));
 
     if(Objects.nonNull(body)) {
       JsonObject download = body.getJsonObject("download");
@@ -108,6 +108,11 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
         } else {
           logger.info("OPERATION FOR PROCESSING SHARED IMPORT DOWNLOADS SUCCESSFULLY COMPLETED.\nFETCHING NEXT...");
           vertx.setTimer(TimeUnit.SECONDS.toMillis(20) , timer -> {
+            // publish to client:
+            CompositeFuture result = res.result();
+            List<Object> resultList = result.list();
+            vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("operation", "success").put("msg", resultList.toString()));
+            // get next one...
             vertx.eventBus().send(Topics.SHARED_GET_ONE , new JsonObject().put("type","sealed"));
           });
         }
@@ -164,6 +169,9 @@ public class ComparingSharedImportsVerticle extends AbstractVerticle {
       logger.info("OPERATION COMPARING SHARED IMPORT HEADERS FAILED: " + asyncResult.cause());
     } else {
       // successful compare and update...
+
+      //send to client..
+      vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("operation", "success").put("msg", asyncResult.result()));
     }
   }
 

@@ -9,9 +9,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 public class SaveContentVerticle extends AbstractVerticle {

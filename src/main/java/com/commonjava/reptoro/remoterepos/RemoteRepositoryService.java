@@ -40,6 +40,12 @@ public interface RemoteRepositoryService {
 
     void getAllRemoteRepositoriesFromDb(Handler<AsyncResult<JsonArray>> handler);
 
+    void getAllNotComparedRemoteRepositories(Handler<AsyncResult<JsonObject>> handler);
+
+    void getRemoteRepositoryCount(Handler<AsyncResult<JsonObject>> handler);
+
+    void changeRemoteRepositoryProtocol(JsonObject repoChange,String protocol,Handler<AsyncResult<JsonObject>> handler);
+
     @GenIgnore
     static RemoteRepositoryService createProxy(Vertx vertx, String address) {
         return new RemoteRepositoryServiceVertxEBProxy(vertx,address);

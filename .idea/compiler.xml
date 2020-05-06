@@ -19,7 +19,6 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="repomigrator-test" target="1.8" />
       <module name="reptoro" target="1.8" />
     </bytecodeTargetLevel>
   </component>

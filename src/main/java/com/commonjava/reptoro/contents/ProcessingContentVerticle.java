@@ -12,16 +12,17 @@ import io.vertx.core.*;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static com.commonjava.reptoro.contents.Content.toJson;
 import static com.commonjava.reptoro.remoterepos.RemoteRepository.toJson;
 
 public class ProcessingContentVerticle extends AbstractVerticle {
@@ -86,6 +87,9 @@ public class ProcessingContentVerticle extends AbstractVerticle {
 
     logger.info("> PROCESSING HEADERS / CONTENTS SIZE: " + contents.size() + "\n\t\tFOR REPO: " + contentsObj.getString("key"));
 
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg","PROCESSING " + contentsObj.getString("key") + " SIZE: " + contents.size()));
+
     if (!contents.isEmpty()) {
       CompositeFuture.join(
         contents
@@ -120,10 +124,7 @@ public class ProcessingContentVerticle extends AbstractVerticle {
 
         } else {
           logger.info("GETTING ALL HEADERS FAILED." );
-          // TODO Send this repo to waiting or post-processing queue???
-
           // for now we will just change repo stage to this repo in problematic and start process next one...
-
           changeRepositoryStateToPromlematic(contentsObj.getString("key"))
             .onComplete(update -> {
               if (update.succeeded()) {
@@ -144,10 +145,8 @@ public class ProcessingContentVerticle extends AbstractVerticle {
       changeRepositoryStateToFinish(contentsObj.getString("key"))
         .onComplete(res -> {
           if (res.succeeded()) {
-            // send it for protocol change
-            // TODO create change protocol verticle...
             if (Objects.nonNull(res.result())) {
-              vertx.eventBus().send(Topics.CHANGE_PROTOCOL, new JsonObject().put("repokey", contentsObj.getString("key")));
+//              vertx.eventBus().send(Topics.CHANGE_PROTOCOL, new JsonObject().put("repokey", contentsObj.getString("key")));
               // send msg for next repo "REPO_GET_ONE"
               vertx.eventBus().send(Topics.REPO_GET_ONE, new JsonObject().put("type", "maven"));
 

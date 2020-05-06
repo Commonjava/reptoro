@@ -7,9 +7,10 @@ import com.commonjava.reptoro.common.Topics;
 import com.commonjava.reptoro.contents.Content;
 import com.commonjava.reptoro.contents.ContentProcessingService;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import io.vertx.cassandra.*;
+import io.vertx.cassandra.CassandraClientOptions;
+import io.vertx.cassandra.Mapper;
+import io.vertx.cassandra.MappingManager;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
@@ -22,12 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.commonjava.reptoro.remoterepos.RemoteRepository.toJson;
@@ -64,6 +61,8 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
     Cluster build =
       cassandraClientOptions
         .dataStaxClusterBuilder()
+        .withoutMetrics()
+        .withoutJMXReporting()
         .withCredentials(cassandraConfig.getString("user"), cassandraConfig.getString("pass"))
         .withPort(config().getJsonObject("cassandra").getInteger("port"))
         .addContactPoint(cassandraConfig.getString("hostname"))
@@ -108,10 +107,34 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
 
     eventBus.consumer(Topics.REPO_START, this::handleRemoteRepoStart);
 
+    eventBus.consumer(Topics.REPO_UPDATE, this::handleRemoteRepositoryUpdate);
+
+  }
+
+  private void handleRemoteRepositoryUpdate(Message<JsonObject> tMessage) {
+    JsonObject repoChange = tMessage.body();
+
+    mapper.get(Collections.singletonList(repoChange.getString("key")), res -> {
+      if (res.succeeded()) {
+        RemoteRepository repo = res.result();
+        repo.setUrl(repoChange.getString("url"));
+        mapper.save(repo, save -> {
+          if (save.succeeded()) {
+            tMessage.reply(new JsonObject().put("operation", "success"));
+          } else {
+            tMessage.reply(new JsonObject().put("operation", "failure"));
+          }
+        });
+      }
+    });
   }
 
   private void handleRemoteRepoFetch(Message<JsonObject> tMessage) {
     JsonObject cmd = tMessage.body();
+
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg",cmd));
+
     logger.info("RECEIVED START VALIDATE REMOTE REPOSITORIES| COMMAND: \n" + cmd.encodePrettily());
     logger.info("==============<FETCHING REMOTE REPOSITORIES FROM INDY>================");
     processRemoteRepositories()
@@ -141,6 +164,10 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
 
   private void handleGetOneRepository(Message<JsonObject> tMessage) {
     JsonObject packageType = tMessage.body();
+
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg",packageType));
+
     if (packageType.getString("type").equalsIgnoreCase("maven")) {
       logger.info("===> FETCHING ONE MAVEN REPOSITORY FROM DB <===");
       repoService.getOneRemoteRepository(asyncResult -> {
@@ -161,9 +188,9 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
 
   private void handleRemoteRepoStart(Message<JsonObject> tMessage) {
     JsonObject repo = tMessage.body();
-    logger.info(repo.encodePrettily());
 
-    // TODO check and test different stage logic...
+    // publish to client:
+    vertx.eventBus().publish(Topics.CLIENT_TOPIC,new JsonObject().put("msg",repo));
 
     switch (repo.getString("stage")) {
       case RepoStage.START:
@@ -171,6 +198,9 @@ public class ProcessingRepositoriesVerticle extends AbstractVerticle {
           .compose(this::storeContentsInRepoJson)
           .compose(this::saveContentsInDb)
           .setHandler(this::handleContentsRepoResult);
+
+        tMessage.reply(new JsonObject().put("operation", "success").put("timestamp", Instant.now()));
+
         break;
 
       case RepoStage.CONTENT:

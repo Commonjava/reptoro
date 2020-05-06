@@ -1,7 +1,6 @@
 package com.commonjava.reptoro.remoterepos;
 
 import com.commonjava.reptoro.common.RepoStage;
-import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.Row;
 import io.vertx.cassandra.*;
 import io.vertx.core.AsyncResult;
@@ -9,6 +8,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
@@ -74,6 +74,8 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
         cassandraClientOptions
                 .setKeyspace(reptoroKeyspace)
                 .dataStaxClusterBuilder()
+                .withoutJMXReporting()
+                .withoutMetrics()
                 .withPort(port)
                 .withCredentials(user, pass)
                 .addContactPoint(cassandraHostname);
@@ -90,7 +92,7 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
         client
                 .get(indyPort, indyHost,
                         (packageType.equalsIgnoreCase("maven") || packageType.isEmpty()) ? this.indyApi + this.mavenApi : this.indyApi + this.npmApi)
-                .basicAuthentication(indyUser, indyPass)
+//                .basicAuthentication(indyUser, indyPass)
                 .send(res -> {
                     HttpResponse<Buffer> result = res.result();
                     if (result.statusCode() == 200) {
@@ -374,6 +376,100 @@ public class RemoteRepositoryServiceImpl implements RemoteRepositoryService {
         });
       }
     });
+  }
+
+  @Override
+  public void getAllNotComparedRemoteRepositories(Handler<AsyncResult<JsonObject>> handler) {
+    String query = "SELECT COUNT(*) FROM reptoro.repos WHERE compared=False ALLOW FILTERING;";
+
+    cassandraReptoroClient.execute(query , res -> {
+      if(res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        ResultSet result = res.result();
+        result.one(rowResult -> {
+          Row row = rowResult.result();
+          if(Objects.nonNull(row)) {
+            long count = row.getLong("count");
+            handler.handle(Future.succeededFuture(new JsonObject().put("count", count)));
+          } else {
+            handler.handle(Future.succeededFuture(new JsonObject().put("count", 0)));
+          }
+        });
+      }
+    });
+  }
+
+  @Override
+  public void getRemoteRepositoryCount(Handler<AsyncResult<JsonObject>> handler) {
+    String query = "SELECT COUNT(*) FROM reptoro.repos ALLOW FILTERING;";
+
+    cassandraReptoroClient.execute(query, res -> {
+      if(res.failed()) {
+        handler.handle(Future.failedFuture(res.cause()));
+      } else {
+        ResultSet result = res.result();
+        result.one(rowResult -> {
+          Row row = rowResult.result();
+          handler.handle(Future.succeededFuture(new JsonObject().put("count", row.getLong("count"))));
+        });
+      }
+    });
+  }
+
+  @Override
+  public void changeRemoteRepositoryProtocol(JsonObject repoChange,String protocol,Handler<AsyncResult<JsonObject>> handler) {
+    String url = repoChange.getString("url");
+
+    String bearerToken = repoChange.getString("token");
+
+    String[] urlArr = url.split("\\:");
+    String previousProtocol = urlArr[0];
+    String hostPath = urlArr[1];
+
+    String changeUrl = String.format("%s:%s", protocol , hostPath);
+
+    repoChange.put("url", changeUrl);
+    repoChange.remove("token");
+
+
+    logger.info(repoChange.encodePrettily());
+    logger.info(changeUrl);
+    logger.info("http://" + indyHost + ":" + indyPort + indyApi + mavenApi + "/" + repoChange.getString("name"));
+
+    client
+      .put(indyPort, indyHost, indyApi + mavenApi + "/" + repoChange.getString("name") )
+//      .basicAuthentication(indyUser, indyPass)
+      .bearerTokenAuthentication(bearerToken)
+      .putHeader("Accept", "application/json, text/plain, */*")
+      .putHeader("Content-Type", "application/json;charset=UTF-8")
+      .sendJsonObject(repoChange,res -> {
+        if(res.failed()) {
+          handler.handle(Future.failedFuture(res.cause()));
+        } else {
+          HttpResponse<Buffer> result = res.result();
+          int statusCode = result.statusCode();
+          if(statusCode >= 400) {
+            handler.handle(
+              Future.failedFuture(
+                new JsonObject().put("statuscode", statusCode).put("body", result.bodyAsString()).encode())
+            );
+          }
+
+          JsonObject response = new JsonObject();
+          Iterator<Map.Entry<String, String>> headers = result.headers().iterator();
+          JsonObject headersJson = new JsonObject();
+          while (headers.hasNext()) {
+            Map.Entry<String, String> headerTuple = headers.next();
+            headersJson.put(headerTuple.getKey(), headerTuple.getValue());
+          }
+          response.put("timestamp", Instant.now());
+          response.put("result",repoChange);
+          response.put("headers", headersJson);
+          response.put("statuscode",statusCode);
+          handler.handle(Future.succeededFuture(response));
+        }
+      });
   }
 
 

@@ -1,0 +1,109 @@
+<pf-card class="container-fluid container-cards-pf">
+    <pf-card class="row row-cards-pf">
+        <!-- Page Header -->
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <div class="page-header page-header-bleed-right">
+                <h1><strong>{{ header }}</strong></h1>
+            </div>
+        </div><!-- End Page Header -->
+        <!-- Card -->
+        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+            <div class="card-pf card-pf-view card-pf-view-select card-pf-view-single-select">
+                <div class="card-pf-body">
+                    <div class="card-pf-top-element">
+                        <span class="pficon pficon-registry card-pf-icon-circle"></span>
+                    </div>
+                    <h2 class="card-pf-title text-center">
+                        REMOTE REPOSITORIES
+                    </h2>
+                    <div class="card-pf-items text-center">
+                        <div class="card-pf-item">
+                            <span class="fa fa-file"></span>
+                            <span class="card-pf-item-text"><strong>{{ remoteRepoContentCount }}</strong></span>
+                        </div>
+                        <div class="card-pf-item">
+                            <span class="pficon pficon-registry"></span>
+                            <span class="card-pf-item-text"><strong>{{ remoteReposCount }}</strong></span>
+                        </div>
+                        <div class="card-pf-item">
+                            <span class="pficon pficon-resources-almost-empty"></span>
+                            <span class="card-pf-item-text"><strong>{{ reposNotCompared }}</strong></span>
+                        </div>
+                    </div>
+                    <p class="card-pf-info text-center">
+                        <span class="card-pf-item"><button class="btn btn-primary"
+                                                           ng-click="startRepoProcess()">Start</button></span>
+                        <span class="card-pf-item"><button class="btn btn-danger"
+                                                           ng-click="stopRepoProcess()">Stop</button></span>
+                    </p>
+                    <p class="card-pf-info text-center">
+                        <strong>{{ lastRepoAction }} On</strong> {{ lastRepoActionTimestamp | date:'medium' }}
+                    </p>
+                </div>
+            </div>
+        </div><!-- End Card -->
+        <!-- Card -->
+        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+            <div class="card-pf card-pf-view card-pf-view-select card-pf-view-single-select">
+                <div class="card-pf-body">
+                    <div class="card-pf-top-element">
+                        <span class="pficon pficon-registry card-pf-icon-circle"></span>
+                    </div>
+                    <h2 class="card-pf-title text-center">
+                        SHARED IMPORTS
+                    </h2>
+                    <div class="card-pf-items text-center">
+                        <div class="card-pf-item">
+                            <span class="fa fa-file"></span>
+                            <span class="card-pf-item-text"><strong>{{sharedImportsContentCount}}</strong></span>
+                        </div>
+                        <div class="card-pf-item">
+                            <span class="pficon pficon-build"></span>
+                            <span class="card-pf-item-text"><strong>{{sharedImportsCount}}</strong></span>
+                        </div>
+                        <div class="card-pf-item">
+                            <span class="pficon pficon-resources-almost-empty"></span>
+                            <span class="card-pf-item-text"><strong>{{ importsNotCompared }}</strong></span>
+                        </div>
+                    </div>
+                    <p class="card-pf-info text-center">
+                        <span class="card-pf-item"><button class="btn btn-primary" ng-click="startImportsProcess()">Start</button></span>
+                        <span class="card-pf-item"><button class="btn btn-danger"
+                                                           ng-click="stopImportsProcess()">Stop</button></span>
+                    </p>
+                    <p class="card-pf-info text-center">
+                        <strong>{{ lastImportAction }} On</strong> {{ lastImportActionTimestamp | date:'medium' }}
+                    </p>
+                </div>
+                <div class="card-pf-view-checkbox">
+                    <input type="checkbox">
+                </div>
+            </div>
+        </div><!-- End Card -->
+
+        <!--    metrics  -->
+      <pf-card head-title="Events" sub-title="Last 15 Minuts" show-top-border="true" show-titles-separator="true" style="width: 40%">
+            <pf-trends-chart config="eventsConfig" chart-data="eventsData" show-x-axis="eventsShowXAxis"
+                             show-y-axis="eventsShowYAxis">
+            </pf-trends-chart>
+            <pf-line-chart config="lineConfig" chart-data="lineChartData" set-area-chart="custAreaChart"
+                           show-x-axis="custShowXAxis" show-y-axis="custShowYAxis">
+            </pf-line-chart>
+        </pf-card>
+        <!-- end metrics -->
+
+        <!-- Logs -->
+        <div class="ccol-lg-12 col-md-12 col-sm-12">
+      <span class="pficon pficon-messages ">
+        <strong><h5>Application Logs</h5></strong>
+      </span>
+            <pre style="display: block;padding: 1.5px;margin: 0 0 10px;font-size: 11px;line-height: 1.666;color: black;word-break: break-all;word-wrap: break-word;background-color: #fafafa;border: 1px solid #cccccc;border-radius: 1px;max-height: 500px;">
+        {{ appLogs }}
+      </pre>
+        </div>
+        <!--End Logs-->
+
+        <div ng-if="adminPanelLoading" class="spinner spinner-lg"
+             style="position: absolute;height: 100px;width: 100px;top: 50%;left: 50%;margin-left: -50px;margin-top: -50px;background-size: 100%;"></div>
+        </div>
+        </div>

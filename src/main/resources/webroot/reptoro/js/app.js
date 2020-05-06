@@ -2,7 +2,11 @@
 
 var reptoroApp = angular.module('ReptoroApp', [
     'ngRoute',
-    'appControllers'
+    'patternfly',
+    'patternfly.charts',
+    'appControllers',
+    'patternfly.modals',
+    'patternfly.notification'
 ]);
 
 /**
@@ -11,8 +15,8 @@ var reptoroApp = angular.module('ReptoroApp', [
 reptoroApp.config(['$routeProvider', function ($routeProvider) {
     $routeProvider
     .when('/', {
-      templateUrl: '/reptoro/repos.html',
-      controller: 'ReposCtrl'
+      templateUrl: '/reptoro/admin.html',
+      controller: 'AdminCtrl'
     })
     .when('/remoterepos', {
       templateUrl: '/reptoro/repos.html',
@@ -22,22 +26,14 @@ reptoroApp.config(['$routeProvider', function ($routeProvider) {
       templateUrl: '/reptoro/imports.html',
       controller: 'SharedCtrl'
     })
-    // .when('/cart', {
-    //   templateUrl: 'app/view/cart.html',
-    //   controller: 'CartCtrl'
-    // })
-    // .when('/account', {
-    //   templateUrl: 'app/view/account.html',
-    //   controller: 'AccountCtrl'
-    // })
-    // .when('/orders', {
-    //   templateUrl: 'app/view/orders.html',
-    //   controller: 'UserOrderCtrl'
-    // })
-    // .when('/orders/:orderId', {
-    //   templateUrl: 'app/view/order-detail.html',
-    //   controller: 'OrderDetailCtrl'
-    // })
+    .when('/admin', {
+      templateUrl: '/reptoro/admin.html',
+      controller: 'AdminCtrl'
+    })
+    .when('/downloads/:id', {
+      templateUrl: '/reptoro/downloads.html',
+      controller: 'DownloadsCtrl'
+    })
     .when('/404', {
       templateUrl: '/404.html'
     })
@@ -45,3 +41,25 @@ reptoroApp.config(['$routeProvider', function ($routeProvider) {
       redirectTo: '/404'
     })
   }]);
+
+// startFrom Filter for Pagination
+reptoroApp.filter('startFrom', function() {
+  return function(input, start) {
+      start = +start;
+      return input.slice(start);
+  }
+});
+
+reptoroApp.filter('split', function() {
+  return function(input, splitChar, splitIndex) {
+    // do some bounds checking here to ensure it has that index
+    return input.split(splitChar)[splitIndex];
+  }
+});
+
+reptoroApp.filter('splitLast', function() {
+    return function(input, splitChar) {
+      var split = input.split(splitChar);
+      return split[split.length-1];
+    }
+});

@@ -5,14 +5,18 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Vert.x Microservice Blueprint - Online shopping SPA">
-  <meta name="author" content="sczyh30">
+  <meta name="description" content="Reptoro Ad-Hok Repository Migrator">
+  <meta name="author" content="ggeorgie">
 
   <title>Reptoro</title>
 
   <!-- webpack bundled css -->
-  <link rel="stylesheet" href="./css/patternfly.min.css">
-  <link rel="stylesheet" href="./css/patternfly-additions.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly-additions.min.css">
+
+<!--  <link rel="stylesheet" href="./css/patternfly.min.css">-->
+<!--  <link rel="stylesheet" href="./css/patternfly-additions.min.css">-->
+<!--  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-patternfly/5.0.3/styles/angular-patternfly.min.css">-->
 
   <!-- webpack bundled dependencies -->
   <script src="./js/main.bundle.js"></script>
@@ -30,6 +34,7 @@
 
   <!-- AngularJS-Patternfly Dependencies -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.4/js/patternfly.min.js"></script>
+
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/jquery.js"></script>
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/bootstrap.min.js"></script>
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/bootstrap-select.js"></script>
@@ -52,7 +57,7 @@
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-bootstrap-prettify.js"></script>
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/lodash.min.js"></script>
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-patternfly.js"></script>
-  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-ui-router.min.js"></script>
+<!--  <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-ui-router.min.js"></script>-->
   <script src="https://patternfly.github.io/angular-patternfly/grunt-scripts/angular-drag-and-drop-lists.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-route/1.7.9/angular-route.min.js"></script>
@@ -86,16 +91,19 @@
               <span><a href="#!user">{{ user.username | uppercase }}</a></span>
           </span>
         </li>
-        <li ng-if="user.id == undefined"><a ng-href="/login">Login</a></li>
-        <li ng-if="user.id != undefined"><a ng-click="logout()" href="#">Logout</a></li>
+        <li ng-if="user.id == undefined"><a ng-href="#!login">Login</a></li>
+        <li ng-if="user.id != undefined"><a ng-click="logout()" href="#!logout">Logout</a></li>
       </ul>
-      <ul class="nav navbar-nav navbar-primary">
-        <li class="active">
-          <a href="#!remoterepos">Remote Repositories Validation</a>
+      <ul class="nav navbar-nav navbar-primary nav-tabs">
+        <li ngClass="{'active': viewType=='admin'}" >
+          <a href="#!admin">Admin Panel</a>
         </li>
-        <li>
-          <a href="#!sharedimports">Shared Imports Validation</a>
-        </li> 
+        <li ngClass="{'active': viewType=='repos'}" >
+          <a href="#!remoterepos">Remote Repositories</a>
+        </li>
+        <li ngClass="{'active': viewType=='imports'}" >
+          <a href="#!sharedimports">Shared Imports</a>
+        </li>
       </ul>
     </div>
   </nav><!-- end nav -->
@@ -104,6 +112,19 @@
     <div ng-view></div>
   </div><!-- container -->
 
+  <!-- Footer -->
+  <footer class="page-footer font-small blue">
+
+    <!-- Copyright -->
+    <div class="footer-copyright text-center py-3">© 2020 Copyright:
+      <a href="https://redhat.com/"> redhat.com</a>
+    </div>
+    <!-- Copyright -->
+
+  </footer>
+  <!-- Footer -->
+
+  
   <script>
     // Row Checkbox Selection
     $(document).ready(function () {
@@ -116,6 +137,15 @@
       });
 
       // Row navigation to contents/details page
+      $(".list-group-item").click(function (e) {
+        var target = e.target;
+        //check if clicked element is a div, and not <a>, button or input
+        if ($(target).is('div')) {
+          window.location = $(this).data("link");
+        }
+      });
+
+      // Tab navigation to contents/details page
       $(".list-group-item").click(function (e) {
         var target = e.target;
         //check if clicked element is a div, and not <a>, button or input
