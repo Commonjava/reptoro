@@ -47,7 +47,7 @@ pipeline {
         stage('Build') {
             steps {
 //                 sh 'mvn -B -V clean verify'
-                sh 'mvn clean install'
+                sh 'rm -rf src/main/generated/src && mvn clean install'
             }
         }
         stage('Create') {
