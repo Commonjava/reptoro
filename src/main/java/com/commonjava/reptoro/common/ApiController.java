@@ -103,6 +103,8 @@ public class ApiController extends AbstractVerticle {
   @Override
   public void start() throws Exception {
 
+    ReptoroConfig.configureLogging();
+
     EventBus eventBus = vertx.eventBus();
     this.config = config();
 
