@@ -160,10 +160,8 @@ public class ApiController extends AbstractVerticle {
         ;
 
     oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakConfig,httpClientOptions);
-
     OAuth2AuthHandler oAuth2AuthHandler1 = OAuth2AuthHandler.create(oAuth2Auth);
     oAuth2AuthHandler1.setupCallback(router.get(REPTORO_CALLBACK));
-
     // session handler needs access to the authenticated user, otherwise we get an infinite redirect loop
     sessionHandler.setAuthProvider(oAuth2Auth);//***
 
