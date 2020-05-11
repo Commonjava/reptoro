@@ -2,7 +2,7 @@
 FROM registry.redhat.io/redhat-openjdk-18/openjdk18-openshift
 
 ENV JAVA_APP_DIR=/deployments \
-    JAVA_OPTIONS="-Dvertx.cacheDirBase=/tmp"
+    JAVA_OPTIONS="-Dvertx.cacheDirBase=/tmp -Dvertx.disableDnsResolver=true"
 # -Dvertx.disableDnsResolver=true
 LABEL org.label-schema.description="" \
         org.label-schema.version=1.0.0-SNAPSHOT \
@@ -35,13 +35,13 @@ RUN cd /etc/pki/ca-trust/source/anchors && \
 #    && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias redhatcert -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
 
 #RUN keytool -genkey -keyalg RSA -alias redhat -keystore keystore.jks -validity 360 -keysize 2048s
-#RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crt -keystore $JAVA_HOME/lib/security/cacerts
-#RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Eng_Ops_CA.crt -keystore $JAVA_HOME/lib/security/cacerts
-#RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Red_Hat_IS_CA.crt -keystore $JAVA_HOME/lib/security/cacerts
-#RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Eng_Ops_CA.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Red_Hat_IS_CA.crt -keystore $JAVA_HOME/lib/security/cacerts
+RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 
 #RUN keytool -import -alias redhat.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/Eng-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 #RUN keytool -import -alias redhat1.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/legacy.crt -keystore $JAVA_HOME/lib/security/cacerts
 #RUN keytool -import -alias redhat2.com -storepass changeit -noprompt -trustcacerts -import -file /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt -keystore $JAVA_HOME/lib/security/cacerts
 #
-#USER 1001
+USER 1001
