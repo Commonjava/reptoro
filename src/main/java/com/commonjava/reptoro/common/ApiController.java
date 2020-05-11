@@ -175,7 +175,7 @@ public class ApiController extends AbstractVerticle {
     // logging of user requests
     router.route().handler(LoggerHandler.create());
 
-    router.route(API_REPTORO_PROTECTED).handler(oAuth2AuthHandler1);
+//    router.route(API_REPTORO_PROTECTED).handler(oAuth2AuthHandler1);
 
     router.get(API_REPOSITORY_ALL).handler(this::handleGetAllRepositories);
     router.get(API_REPOS_NOTVALIDATED_COUNT).handler(this::handleNotValidatedRemoteRepositories);
