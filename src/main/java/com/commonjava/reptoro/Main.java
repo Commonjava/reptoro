@@ -112,7 +112,7 @@ public class Main {
 
         Future apiVerticleFuture = Future.future(promise -> {
           ApiController apiVerticle = new ApiController();
-          DeploymentOptions apiControllerOptions = new DeploymentOptions().setConfig(res.result());
+          DeploymentOptions apiControllerOptions = new DeploymentOptions().setWorker(true).setConfig(res.result());
 
           vertx.deployVerticle(apiVerticle, apiControllerOptions,
             ar -> ar.map(id -> handleSucessfullDeployment(apiControllerVerticleName, id, promise))

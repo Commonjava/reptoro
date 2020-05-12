@@ -49,7 +49,7 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="stdout"/>
+<!--        <appender-ref ref="stdout"/>-->
         <appender-ref ref="KAFKA" />
     </root>
 
