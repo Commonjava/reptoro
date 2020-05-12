@@ -13,21 +13,21 @@
         </encoder>
     </appender>
 
-    <!-- Indy Kafka appender -->
+    <!-- Reptoro Kafka appender -->
     <appender name="KAFKA" class="com.github.danielwegener.logback.kafka.KafkaAppender">
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-        <layout class="org.commonjava.indy.CustomJsonLayout">
-            <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter"/>
-            <appendLineSeparator>true</appendLineSeparator>
+            <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter"/>
+                <appendLineSeparator>true</appendLineSeparator>
 
 
-            <environmentMappings><![CDATA[
-          POD_NAMESPACE=NAMESPACE,
-          POD_NAME=POD_NAME,
-          OPENSHIFT_BUILD_COMMIT=BUILD_COMMIT,
-          HOSTNAME=HOSTNAME
-        ]]></environmentMappings>
-        </layout>
+                <environmentMappings><![CDATA[
+              POD_NAMESPACE=NAMESPACE,
+              POD_NAME=POD_NAME,
+              OPENSHIFT_BUILD_COMMIT=BUILD_COMMIT,
+              HOSTNAME=HOSTNAME
+            ]]></environmentMappings>
+            </layout>
         </encoder>
         <topic>indy-logs</topic>
         <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy" />
@@ -50,7 +50,7 @@
 
     <root level="INFO">
         <appender-ref ref="stdout"/>
-        <appender-ref ref="KAFKA-LOG" />
+        <appender-ref ref="KAFKA" />
     </root>
 
 </configuration>
