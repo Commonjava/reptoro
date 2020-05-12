@@ -29,7 +29,7 @@
             ]]></environmentMappings>
             </layout>
         </encoder>
-        <topic>indy-logs</topic>
+        <topic>dynamic-indy-logs</topic>
         <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy" />
         <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
 
