@@ -73,6 +73,7 @@ public class ApiController extends AbstractVerticle {
   public static final String API_REPOSITORY_SCAN = "/reptoro/repo/scan";
   public static final String API_SHAREDIMPORT_SCAN = "/reptoro/import/scan";
   public static final String API_SHAREDIMPORT_DOWNLOADS_FROM_BUILDID = "/reptoro/import/downloads/:id";
+  public static final String API_REPOSITORY_CONTENTS_ALL = "/reptoro/repo/contents/:id";
 
 
 
@@ -104,6 +105,7 @@ public class ApiController extends AbstractVerticle {
   public void start() throws Exception {
 
     ReptoroConfig.configureLogging();
+
 
     EventBus eventBus = vertx.eventBus();
     this.config = config();
@@ -187,7 +189,7 @@ public class ApiController extends AbstractVerticle {
     router.post(API_REPOSITORY_CHANGE).handler(this::handleRemoteRepoChange);
     router.post(API_REPOSITORY_REVERSE).handler(this::handleRemoteRepoReverse);
     router.post(API_REPOSITORY_SCAN).handler(this::handleRemoteRepoRescan);
-    router.get("/reptoro/repo/contents/:id").handler(this::handleGetAllRepoContents);
+    router.get(API_REPOSITORY_CONTENTS_ALL).handler(this::handleGetAllRepoContents);
 
     router.get(API_SHAREDIMPORTS_ALL).handler(this::handleGetAllSharedImports);
     router.get(API_IMPORTS_NOTVALIDATED_COUNT).handler(this::handleNotValidatedSharedImports);
