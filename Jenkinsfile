@@ -46,8 +46,8 @@ pipeline {
         }
         stage('Build') {
             steps {
-//                 sh 'mvn -B -V clean verify'
-                sh 'mvn clean install'
+//                 'sh 'mvn -B -V clean verify'
+                sh "mvn clean install"
             }
         }
         stage('Create') {
@@ -64,7 +64,7 @@ pipeline {
                                 script {
                                     openshift.withCluster() {
                                         openshift.withProject() {
-                                            openshift.selector('dc','reptoro').describe()
+                                            openshift.selector('dc',appName).describe()
                                         }
                                     }
                                 }
@@ -76,7 +76,7 @@ pipeline {
                                 script {
                                     openshift.withCluster() {
                                         openshift.withProject() {
-                                            openshift.selector('svc','reptoro').describe()
+                                            openshift.selector('svc',appName).describe()
                                         }
                                     }
                                 }

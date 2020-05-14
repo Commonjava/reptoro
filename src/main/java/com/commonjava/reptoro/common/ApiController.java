@@ -15,6 +15,7 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.oauth2.KeycloakHelper;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
@@ -102,6 +103,8 @@ public class ApiController extends AbstractVerticle {
   @Override
   public void start() throws Exception {
 
+    ReptoroConfig.configureLogging();
+
     EventBus eventBus = vertx.eventBus();
     this.config = config();
 
@@ -160,10 +163,8 @@ public class ApiController extends AbstractVerticle {
         ;
 
     oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakConfig,httpClientOptions);
-
     OAuth2AuthHandler oAuth2AuthHandler1 = OAuth2AuthHandler.create(oAuth2Auth);
     oAuth2AuthHandler1.setupCallback(router.get(REPTORO_CALLBACK));
-
     // session handler needs access to the authenticated user, otherwise we get an infinite redirect loop
     sessionHandler.setAuthProvider(oAuth2Auth);//***
 
@@ -651,20 +652,33 @@ public class ApiController extends AbstractVerticle {
   }
 
   public void currentuser(RoutingContext context) {
-    String accessToken = KeycloakHelper.rawAccessToken(context.user().principal());
-    JsonObject token = KeycloakHelper.parseToken(accessToken);
+    @Nullable User ctxUser = context.user();
 
-    OAuth2TokenImpl user = (OAuth2TokenImpl) context.user();
-    context.setUser(user);
+    if(Objects.nonNull(ctxUser)) {
+      String accessToken = KeycloakHelper.rawAccessToken(context.user().principal());
+      JsonObject token = KeycloakHelper.parseToken(accessToken);
+
+      OAuth2TokenImpl user = (OAuth2TokenImpl) context.user();
+      context.setUser(user);
 
 
-    context.response()
-      .putHeader(CONTENT_TYPE,APPLICATION_JSON_CHARSET_UTF_8)
-      .end(new JsonObject()
-        .put("id",token.getString("jti"))
-        .put("token",token)
-        .put("username",token.getString("preferred_username"))
-        .encodePrettily());
+      context.response()
+          .putHeader(CONTENT_TYPE,APPLICATION_JSON_CHARSET_UTF_8)
+          .end(new JsonObject()
+              .put("id",token.getString("jti"))
+              .put("token",token)
+              .put("username",token.getString("preferred_username"))
+              .encodePrettily());
+    } else {
+      context.response()
+          .putHeader(CONTENT_TYPE,APPLICATION_JSON_CHARSET_UTF_8)
+          .end(new JsonObject()
+              .put("id","none")
+              .put("token","none")
+              .put("username","none")
+              .encodePrettily());
+    }
+
   }
 
   public void handleGetAllRepositories(RoutingContext rc) {

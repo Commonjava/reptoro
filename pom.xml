@@ -143,31 +143,41 @@
     </dependency>
 
     <!-- Logging dependencies -->
-    <!--        <dependency>-->
-    <!--            <groupId>ch.qos.logback.contrib</groupId>-->
-    <!--            <artifactId>logback-jackson</artifactId>-->
-    <!--            <version>${logback.contrib.version}</version>-->
-    <!--        </dependency>-->
-    <!--        <dependency>-->
-    <!--            <groupId>ch.qos.logback.contrib</groupId>-->
-    <!--            <artifactId>logback-json-classic</artifactId>-->
-    <!--            <version>${logback.contrib.version}</version>-->
-    <!--        </dependency>-->
-    <!--        <dependency>-->
-    <!--            <groupId>com.fasterxml.jackson.core</groupId>-->
-    <!--            <artifactId>jackson-databind</artifactId>-->
-    <!--            <version>2.9.8</version>-->
-    <!--        </dependency>-->
-    <!--        <dependency>-->
-    <!--            <groupId>ch.qos.logback</groupId>-->
-    <!--            <artifactId>logback-classic</artifactId>-->
-    <!--            <version>1.2.3</version>-->
-    <!--        </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>io.vertx</groupId>-->
-<!--      <artifactId>vertx-dropwizard-metrics</artifactId>-->
-<!--      <version>3.6.3</version>-->
-<!--    </dependency>-->
+            <dependency>
+                <groupId>ch.qos.logback.contrib</groupId>
+                <artifactId>logback-jackson</artifactId>
+                <version>${logback.contrib.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback.contrib</groupId>
+                <artifactId>logback-json-classic</artifactId>
+                <version>${logback.contrib.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.9.8</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.2.3</version>
+            </dependency>
+            <dependency>
+              <groupId>ch.qos.logback</groupId>
+              <artifactId>logback-core</artifactId>
+              <version>1.2.3</version>
+            </dependency>
+            <dependency>
+              <groupId>com.github.danielwegener</groupId>
+              <artifactId>logback-kafka-appender</artifactId>
+              <version>0.2.0-RC2</version>
+            </dependency>
+            <dependency>
+              <groupId>org.apache.kafka</groupId>
+              <artifactId>kafka-clients</artifactId>
+              <version>2.2.0</version>
+            </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-health-check</artifactId>

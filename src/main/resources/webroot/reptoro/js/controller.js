@@ -496,6 +496,7 @@ reptoroApp.controller("HeaderCtrl", ['$scope', '$http', '$rootScope', '$location
     $scope.user = {};
     $rootScope.user = {};
     $scope.viewType = 'admin';
+    $rootScope.logedIn = false;
 
     $scope.logout = function () {
       $http.post('/reptoro/logout', {})
@@ -518,6 +519,7 @@ reptoroApp.controller("HeaderCtrl", ['$scope', '$http', '$rootScope', '$location
           $scope.user = response.data;
           $rootScope.authenticated = true;
           $rootScope.user = response.data;
+          $rootScope.logedIn = true;
           $log.log(response.data);
         }, function (response) {
           scope.user = {};

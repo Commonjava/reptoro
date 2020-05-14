@@ -19,3 +19,12 @@ spec:
             requests:
               cpu: 4
               memory: 4G
+          volumeMounts:
+            - mountPath: /mnt/secrets-kafka/
+              name: reptoro-kafka-secret
+              readOnly: true
+      volumes:
+        - name: reptoro-kafka-secret
+          secret:
+            defaultMode: 420
+            secretName: indy-kafka

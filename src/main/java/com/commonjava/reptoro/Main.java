@@ -1,5 +1,8 @@
 package com.commonjava.reptoro;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Slf4jReporter;
 import com.commonjava.reptoro.common.ApiController;
 import com.commonjava.reptoro.common.ReptoroConfig;
 import com.commonjava.reptoro.common.Topics;
@@ -17,6 +20,7 @@ import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +44,29 @@ public class Main {
 
   public static void main(String[] args) {
 
+    System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
+
+    // Initialize metric registry
+    String registryName = "registry";
+    MetricRegistry registry = SharedMetricRegistries.getOrCreate(registryName);
+    SharedMetricRegistries.setDefault(registryName);
+
+    Slf4jReporter reporter = Slf4jReporter.forRegistry(registry)
+        .outputTo(LoggerFactory.getLogger(Main.class))
+        .convertRatesTo(TimeUnit.SECONDS)
+        .convertDurationsTo(TimeUnit.MILLISECONDS)
+        .build();
+    reporter.start(1, TimeUnit.MINUTES);
+
+    // Initialize vertx with the metric registry
+    DropwizardMetricsOptions metricsOptions = new DropwizardMetricsOptions()
+        .setEnabled(true)
+        .setMetricRegistry(registry);
+
     VertxOptions options = new VertxOptions();
+
+    // Dropwizard Metrics options
+    options.setMetricsOptions(metricsOptions);
 
     // check for blocked threads every 10s
     options.setBlockedThreadCheckInterval(10);
