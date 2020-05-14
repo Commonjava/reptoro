@@ -1,0 +1,102 @@
+<div class="list-group list-view-pf list-view-pf-view">
+    <div class="col-md-12 col-md-12 col-sm-12">
+        <!-- Page Header -->
+        <div class="page-header page-header-bleed-right">
+            <div class="actions pull-right">
+                <a href="#!contents/{{repoId}}"><span class="pficon pficon-refresh"></span> Refresh Results</a>
+            </div>
+            <h1><strong>{{ contentsHeader | uppercase }}</strong></h1>
+        </div><!-- End Page Header -->
+    </div>
+
+
+    <!-- List View -->
+    <div class="list-group list-view-pf" ng-show="contents && contents.length>0" id="contentsList">
+
+        <div class="col-md-4 col-lg-4 col-sm-6">
+            <form role="form" class="search-pf has-button">
+                <div class="form-group has-clear">
+                    <div class="search-pf-input-group">
+                        <label for="search1" class="sr-only">Search</label>
+                        <input ng-model="q" placeholder="filter names..." aria-label="filter contents" id="search1" type="search" class="form-control">
+                        <button type="button" class="clear" aria-hidden="true"><span class="pficon pficon-close"></span></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-default" type="button"><span class="fa fa-search"></span></button>
+                </div>
+            </form>
+        </div>
+        <hr class="col-lg-12 col-md-12 col-sm-12" />
+        <div data-link="#" class="list-group-item col-md-12 col-lg-12 col-sm-12"
+             ng-repeat="content in contents | startFrom:(pageNumber - 1)*pageSize | limitTo:pageSize | filter:q as results track by content.parentpath+content.filename"
+             ng-click="showSourceHeaders(content.sourceheaders)" ng-class-odd="'bg-light'" data-toggle="modal" data-target="#myModal">
+            <!--      <a href="#" class="list-group-item-link"></a>-->
+            <div class="list-view-pf-actions">
+                <button class="btn btn-info" ng-click="redownload(content)">ReDownload</button>
+            </div>
+            <div class="list-view-pf-main-info">
+                <div class="list-view-pf-left">
+                    <span ng-if='content.checksum=="true"'
+                          class="pficon pficon-ok list-view-pf-icon-md list-view-pf-icon-success"></span>
+                    <span ng-if='content.checksum=="false"'
+                          class="pficon pficon-error-circle-o list-view-pf-icon-md list-view-pf-icon-danger"></span>
+                    <span ng-if='content.checksum==""' class="pficon list-view-pf-icon-md pficon-unplugged"></span>
+                </div>
+                <div class="list-view-pf-body">
+                    <div class="list-view-pf-description">
+                        <div class="list-group-item-heading">
+                            {{ content.filename }}
+                        </div>
+                        <div class="list-group-item-text">
+                            <a href="{{content.source+content.filename}}" target="_blank">{{content.source+content.filename}}</a>
+                        </div>
+                    </div>
+                    <div class="list-view-pf-additional-info">
+                        <div class="list-view-pf-additional-info-item">
+                            <span class="pficon pficon-screen"></span>
+                            <strong>{{ content.checksum=='true' ? "TRUE" : (content.checksum=='false' ? 'FALSE' : 'NOT COMPARED') }}</strong> checksum
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Source Content Headers -->
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label="Close">
+                                <span class="pficon pficon-close"></span>
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">Content Source Headers</h4>
+                        </div>
+                        <div class="modal-body">
+                            <ol>
+                                <li ng-repeat="(key,value) in sourceheaders track by $index">
+                                    <span>{{ key }}</span> : <strong>{{ value }}</strong>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--End Source Content Headers -->
+
+
+        </div><!-- list-group-item -->
+    </div><!-- End List View -->
+    <div ng-if="contents.length==0" class="spinner spinner-lg" style="position: absolute;height: 100px;width: 100px;top: 50%;left: 50%;margin-left: -50px;margin-top: -50px;background-size: 100%;"></div>
+    <div class="col-md-12 col-md-12 col-sm-12" ng-show="contents && contents.length>0">
+        <!-- Pagination -->
+        <pf-pagination
+                page-size="pageSize"
+                page-number="pageNumber"
+                num-total-items="numTotalItems"
+                page-size-increments="pageSizeIncrements">
+        </pf-pagination>
+        <!-- End Pagination -->
+    </div>
+
+</div>
+

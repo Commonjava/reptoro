@@ -187,6 +187,7 @@ public class ApiController extends AbstractVerticle {
     router.post(API_REPOSITORY_CHANGE).handler(this::handleRemoteRepoChange);
     router.post(API_REPOSITORY_REVERSE).handler(this::handleRemoteRepoReverse);
     router.post(API_REPOSITORY_SCAN).handler(this::handleRemoteRepoRescan);
+    router.get("/reptoro/repo/contents/:id").handler(this::handleGetAllRepoContents);
 
     router.get(API_SHAREDIMPORTS_ALL).handler(this::handleGetAllSharedImports);
     router.get(API_IMPORTS_NOTVALIDATED_COUNT).handler(this::handleNotValidatedSharedImports);
@@ -214,6 +215,26 @@ public class ApiController extends AbstractVerticle {
     server
       .requestHandler(router)
       .listen(config().getJsonObject("reptoro").getInteger("api.gateway.http.port",PORT));
+  }
+
+  private void handleGetAllRepoContents(RoutingContext context) {
+    @Nullable String repoKey = context.request().getParam("id");
+
+    logger.info("REQUESTED CONNTENTS FOR REPO: " + repoKey);
+
+    contentProcessingService.getContentsFromDb(new JsonObject().put("key", repoKey), res -> {
+      if(res.failed()) {
+        context.response()
+            .putHeader(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8)
+            .end(new JsonObject().put("cause", res.cause()).put("results", new JsonObject()).encodePrettily());
+      } else {
+        JsonObject results = res.result();
+        JsonArray contentsJsonArr = results.getJsonArray("data");
+        context.response()
+            .putHeader(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8)
+            .end(new JsonObject().put("results", contentsJsonArr).encodePrettily());
+      }
+    });
   }
 
 

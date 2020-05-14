@@ -34,6 +34,10 @@ reptoroApp.config(['$routeProvider', function ($routeProvider) {
       templateUrl: '/reptoro/downloads.html',
       controller: 'DownloadsCtrl'
     })
+    .when('/contents/:id', {
+            templateUrl: '/reptoro/contents.html',
+            controller: 'ContentsCtrl'
+    })
     .when('/404', {
       templateUrl: '/404.html'
     })
