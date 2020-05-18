@@ -16,14 +16,15 @@
     <!-- Reptoro Kafka appender -->
     <appender name="KAFKA" class="com.github.danielwegener.logback.kafka.KafkaAppender">
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+            <layout class="com.commonjava.reptoro.common.CustomJsonLayout">
                 <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter"/>
                 <appendLineSeparator>true</appendLineSeparator>
 
 
                 <environmentMappings><![CDATA[
-                      POD_NAMESPACE=OPENSHIFT_BUILD_NAMESPACE,
-                      POD_NAME=OPENSHIFT_BUILD_NAME,
+                      POD_NAMESPACE=NAMESPACE,
+                      POD_NAME=POD_NAME,
+                      OPENSHIFT_BUILD_COMMIT=BUILD_COMMIT,
                       HOSTNAME=HOSTNAME
             ]]></environmentMappings>
             </layout>

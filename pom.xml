@@ -231,6 +231,11 @@
       <artifactId>cassandra-driver-mapping</artifactId>
       <version>3.5.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.commonjava.indy.launch</groupId>
+      <artifactId>indy-record-extractor</artifactId>
+      <version>1.9.6-SNAPSHOT</version>
+    </dependency>
 
   </dependencies>
 
@@ -374,7 +379,7 @@
             <goals>
               <goal>resource</goal>
               <goal>build</goal>
-              <goal>deploy</goal>
+<!--              <goal>deploy</goal>-->
             </goals>
           </execution>
         </executions>
