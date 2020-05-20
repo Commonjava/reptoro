@@ -2,30 +2,64 @@
 
 image:https://img.shields.io/badge/vert.x-3.8.3-purple.svg[link="https://vertx.io"]
 
-This application was generated using http://start.vertx.io
+
+## Infrastructure
+
+    - Reptoro service
+    - Cassandra DB
+    - Indy
+    - Jenkins (build pipeline)
+    - Ansible (build pipeline)
+
+
+
+## Architecture
+
+    Reptoro is indempotent service based on Vert.x toolkit which is providing Asynchronous Programming style as well as Event Based system of processing logic.
+    There is Backend , Frontend and Persistence Layer in Reptoro Architecture.
+
+    - Front end is AngularJS application based on Paternfly Red Hat opensource UI components.
+    - Backend is based on vanila Vert.x with several Verticles which communicate to theirself with publishing event on Vert.x EventBus.
+    - Persistence is Cassandra Database.
+
+    Because of indempoticity of Reptoro Service all neded resourcess ( Database Tables , Configuration , Logging ...) are created on initial start of service, if they not exist!
+    Cassandra Database must be started , Indy Service must be existing.
+
+## Functionalities
+
+    Like we mentioned previously Reptoro is indempotent service with functionality of creating own tabular spacess in Cassandra DB if they don't exist. Also there is internal configuration based on file store which is providing Reptoro with desired state based on predertermined values which can be placed and taken from configuration file , Kubernetes/Openshift ConfigMap or any other type of key/value store as third party service or as integral part of Reptoro himself.
+    Based on requirements for indy there was need for outside service which would fetch all remote repositories from indy and validate their contents based on checksums which are presented in HTTP request headers of localy stored content as well as upstream content from remote repositories. This checksums are MD5,SHA1 and SHA256 and are taken from upstream remote repository with enabled SSL protocol or more simply said that repository is on HTTPS protocol.
+    After Comparasion and storage of all neccessery validation results Reptoro is providing mechanism of smooth change to more secure HTTPS protocol for all internal hosted repositories with only click of a button, but also reversing that same change back if there is need for that.
+    For Shared Imports Requirement are little different as we don't need to change their protocols but just to compare if they exist in indy environment or not and if theirs checksums are same as upstreams remote repositories from where that file was downloaded.After that validation there is posibility of re-downloading that content or simply deleting it from the indy system.
+    This set of functionalities that Reptoro is posessing can be also used for other investigation purposes for team members as well as anyone who has acess to PNC project and our stakeholders.
+
+    Reptoro Verticles are composed of several functionalities needed for asyn. requesting for outside resources or making database calls and queries.
+
+
+## Deployment
+
+    Like all other services in today's multy service distribuitive environments Reptoro is also having means of easy recreating and redeployment based on CI/CD principles.
+    If you as developer have openshift or kubernetes cluster running localy or remotely and you are login then you can deploy Reptoro service in several ways (after cloning this repo):
+
+        - From your local environment:
+            It is suficient just to run 'mvn clean install' command and Reptoro will be deployed to openshift/kubernetes based on fabric8 maven plugin
+        - From your local environment:
+            In directory './src/main/pipeline' there is yaml script which you can execute (if you are login in openshift) with command 'oc create -f ./src/main/pipeline/reptoro-pipeline.yaml' and openshift pipeline will be created which afterwards you can start it with command 'oc start-build reptoro-pipeline'
+        - From ansible playbooks:
+            In project nos/nos-automation there are reptoro playbook scripts for provisioning all needed resources
+
+
+## Contribute
+
+    Main repository for Reptoro codebase is in [Reptoro](https://github.com/Commonjava/reptoro.git).
+
 
 == Building
 
-To launch your tests:
-```
-./mvnw clean test
-```
-
 To package your application:
 ```
-./mvnw clean package
+./mvn clean install
 ```
 
-To run your application:
-```
-./mvnw clean compile exec:java
-```
-
-== Help
-
-* https://vertx.io/docs/[Vert.x Documentation]
-* https://stackoverflow.com/questions/tagged/vert.x?sort=newest&pageSize=15[Vert.x Stack Overflow]
-* https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
-* https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
 
 

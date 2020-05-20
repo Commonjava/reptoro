@@ -130,15 +130,15 @@ public class Main {
           );
         });
 
-        Future browsedVerticleFuture = Future.future(promise -> {
-          BrowsedStoreVerticle browsedStoreVerticle = new BrowsedStoreVerticle();
-          DeploymentOptions browsedStoreOptions = new DeploymentOptions().setWorker(true).setConfig(res.result());
-
-          vertx.deployVerticle(browsedStoreVerticle, browsedStoreOptions,
-            ar -> ar.map(id -> handleSucessfullDeployment(browsedStoreVerticleName, id, promise))
-              .otherwise(t -> handleFailedDeployment(browsedStoreVerticleName, t, promise))
-          );
-        });
+//        Future browsedVerticleFuture = Future.future(promise -> {
+//          BrowsedStoreVerticle browsedStoreVerticle = new BrowsedStoreVerticle();
+//          DeploymentOptions browsedStoreOptions = new DeploymentOptions().setWorker(true).setConfig(res.result());
+//
+//          vertx.deployVerticle(browsedStoreVerticle, browsedStoreOptions,
+//            ar -> ar.map(id -> handleSucessfullDeployment(browsedStoreVerticleName, id, promise))
+//              .otherwise(t -> handleFailedDeployment(browsedStoreVerticleName, t, promise))
+//          );
+//        });
 
         Future contentVerticleFuture = Future.future(promise -> {
           ContentProcessingVerticle contentRepositoryVerticle = new ContentProcessingVerticle();

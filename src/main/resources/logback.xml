@@ -16,16 +16,16 @@
     <!-- Reptoro Kafka appender -->
     <appender name="KAFKA" class="com.github.danielwegener.logback.kafka.KafkaAppender">
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+            <layout class="com.commonjava.reptoro.common.CustomJsonLayout">
                 <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter"/>
                 <appendLineSeparator>true</appendLineSeparator>
 
 
                 <environmentMappings><![CDATA[
-              POD_NAMESPACE=NAMESPACE,
-              POD_NAME=POD_NAME,
-              OPENSHIFT_BUILD_COMMIT=BUILD_COMMIT,
-              HOSTNAME=HOSTNAME
+                      POD_NAMESPACE=NAMESPACE,
+                      POD_NAME=POD_NAME,
+                      OPENSHIFT_BUILD_COMMIT=BUILD_COMMIT,
+                      HOSTNAME=HOSTNAME
             ]]></environmentMappings>
             </layout>
         </encoder>
@@ -41,7 +41,7 @@
         <producerConfig>ssl.truststore.password=changeit</producerConfig>
 
         <producerConfig>acks=0</producerConfig>
-        <producerConfig>linger.ms=1000</producerConfig>
+        <producerConfig>linger.ms=100</producerConfig>
         <producerConfig>max.block.ms=0</producerConfig>
         <producerConfig>client.id=${HOSTNAME}-${CONTEXT_NAME}-logback-relaxed</producerConfig>
 

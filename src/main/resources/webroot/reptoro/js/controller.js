@@ -566,3 +566,39 @@ reptoroApp.controller('DownloadsCtrl',['$scope', '$http', '$templateCache', '$ro
     }
   }
 ]);
+
+reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$routeParams', '$location', '$route',
+  function ($scope, $http,$routeParams,$location,$route) {
+    $scope.contents = [];
+    $scope.pageSize = 10;
+    $scope.pageNumber = 1;
+    $scope.numTotalItems = $scope.contents.length;
+    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100,500,1000];
+    $scope.repoId = $location.id;
+    $scope.contentsHeader = "CONTENTS FOR REPOSITORY: " + $scope.repoId ;
+
+
+    $scope.showSourceHeaders = function (headers) {
+      $scope.sourceheaders = JSON.parse(headers);
+    }
+
+    $http.get('/reptoro/repo/contents/' + $scope.repoId)
+        .then(function (resp) {
+          $scope.contents = resp.data.results;
+          $scope.cause = resp.data.cause || '';
+          $scope.numTotalItems = $scope.contents.length;
+          // console.log($scope.downloads);
+        }, function (resp) {
+          $scope.contents = [];
+          $scope.status = resp.status;
+    });
+
+    $scope.redownload = function (download) {
+      console.log(download);
+    }
+
+    $scope.openModalHeaders = function(headers) {
+      console.log(JSON.parse(headers));
+    }
+  }
+]);
