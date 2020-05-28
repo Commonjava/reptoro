@@ -234,7 +234,7 @@
     <dependency>
       <groupId>org.commonjava.indy.launch</groupId>
       <artifactId>indy-record-extractor</artifactId>
-      <version>1.9.6-SNAPSHOT</version>
+      <version>1.9.6</version>
     </dependency>
 
   </dependencies>
