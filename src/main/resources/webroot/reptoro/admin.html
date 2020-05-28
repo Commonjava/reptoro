@@ -9,75 +9,88 @@
         <!-- Card -->
         <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
             <div class="card-pf card-pf-view card-pf-view-select card-pf-view-single-select">
-                <div class="card-pf-body">
-                    <div class="card-pf-top-element">
-                        <span class="pficon pficon-registry card-pf-icon-circle"></span>
+                <a href="#!remoterepos">
+                    <div class="card-pf-body">
+                        <div class="card-pf-top-element">
+                            <span class="pficon pficon-registry card-pf-icon-circle"></span>
+                        </div>
+                        <h2 class="card-pf-title text-center">
+                            REMOTE REPOSITORIES
+                        </h2>
+                        <div class="card-pf-items text-center">
+                            <div class="card-pf-item">
+                                <span class="fa fa-file"></span>
+                                <span class="card-pf-item-text" data-toggle="tooltip" data-placement="bottom" title="# of Contents in all Remote Repositories">
+                                    <strong>{{ remoteRepoContentCount }}</strong>
+                                </span>
+                            </div>
+                            <div class="card-pf-item">
+                                <span class="pficon pficon-registry"></span>
+                                <span class="card-pf-item-text" data-toggle="tooltip" data-placement="bottom" title="# of processed Remote Repositories">
+                                    <strong>{{ remoteReposCount }}</strong>
+                                </span>
+                            </div>
+                            <div class="card-pf-item">
+                                <span class="pficon pficon-resources-almost-empty"></span>
+                                <span class="card-pf-item-text" data-toggle="tooltip" data-placement="bottom" title="# of not processed Remote Repositories">
+                                    <strong>{{ reposNotCompared }}</strong>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="card-pf-info text-center">
+                            <span class="card-pf-item"><button class="btn btn-primary"
+                                                            ng-click="startRepoProcess()">Start</button></span>
+                            <span class="card-pf-item"><button class="btn btn-danger"
+                                                            ng-click="stopRepoProcess()">Stop</button></span>
+                        </p>
+                        <p class="card-pf-info text-center">
+                            <strong>{{ lastRepoAction }} On</strong> {{ lastRepoActionTimestamp | date:'medium' }}
+                        </p>
                     </div>
-                    <h2 class="card-pf-title text-center">
-                        REMOTE REPOSITORIES
-                    </h2>
-                    <div class="card-pf-items text-center">
-                        <div class="card-pf-item">
-                            <span class="fa fa-file"></span>
-                            <span class="card-pf-item-text"><strong>{{ remoteRepoContentCount }}</strong></span>
-                        </div>
-                        <div class="card-pf-item">
-                            <span class="pficon pficon-registry"></span>
-                            <span class="card-pf-item-text"><strong>{{ remoteReposCount }}</strong></span>
-                        </div>
-                        <div class="card-pf-item">
-                            <span class="pficon pficon-resources-almost-empty"></span>
-                            <span class="card-pf-item-text"><strong>{{ reposNotCompared }}</strong></span>
-                        </div>
-                    </div>
-                    <p class="card-pf-info text-center">
-                        <span class="card-pf-item"><button class="btn btn-primary"
-                                                           ng-click="startRepoProcess()">Start</button></span>
-                        <span class="card-pf-item"><button class="btn btn-danger"
-                                                           ng-click="stopRepoProcess()">Stop</button></span>
-                    </p>
-                    <p class="card-pf-info text-center">
-                        <strong>{{ lastRepoAction }} On</strong> {{ lastRepoActionTimestamp | date:'medium' }}
-                    </p>
-                </div>
+                </a>
             </div>
         </div><!-- End Card -->
         <!-- Card -->
         <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
             <div class="card-pf card-pf-view card-pf-view-select card-pf-view-single-select">
-                <div class="card-pf-body">
-                    <div class="card-pf-top-element">
-                        <span class="pficon pficon-registry card-pf-icon-circle"></span>
+                <a href="#!sharedimports">
+                    <div class="card-pf-body">
+                        <div class="card-pf-top-element">
+                            <span class="pficon pficon-registry card-pf-icon-circle"></span>
+                        </div>
+                        <h2 class="card-pf-title text-center">
+                            SHARED IMPORTS
+                        </h2>
+                        <div class="card-pf-items text-center">
+                            <div class="card-pf-item">
+                                <span class="fa fa-file"></span>
+                                <span class="card-pf-item-text" data-toggle="tooltip" data-placement="bottom" title="# of Contents in all Shared Imports">
+                                    <strong>{{sharedImportsContentCount}}</strong>
+                                </span>
+                            </div>
+                            <div class="card-pf-item">
+                                <span class="pficon pficon-build"></span>
+                                <span class="card-pf-item-text" data-toggle="tooltip" data-placement="bottom" title="# of processed all Shared Imports">
+                                    <strong>{{sharedImportsCount}}</strong>
+                                </span>
+                            </div>
+                            <div class="card-pf-item">
+                                <span class="pficon pficon-resources-almost-empty"></span>
+                                <span class="card-pf-item-text" data-toggle="tooltip" data-placement="bottom" title="# of not processed Shared Imports">
+                                    <strong>{{ importsNotCompared }}</strong>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="card-pf-info text-center">
+                            <span class="card-pf-item"><button class="btn btn-primary" ng-click="startImportsProcess()">Start</button></span>
+                            <span class="card-pf-item"><button class="btn btn-danger"
+                                                            ng-click="stopImportsProcess()">Stop</button></span>
+                        </p>
+                        <p class="card-pf-info text-center">
+                            <strong>{{ lastImportAction }} On</strong> {{ lastImportActionTimestamp | date:'medium' }}
+                        </p>
                     </div>
-                    <h2 class="card-pf-title text-center">
-                        SHARED IMPORTS
-                    </h2>
-                    <div class="card-pf-items text-center">
-                        <div class="card-pf-item">
-                            <span class="fa fa-file"></span>
-                            <span class="card-pf-item-text"><strong>{{sharedImportsContentCount}}</strong></span>
-                        </div>
-                        <div class="card-pf-item">
-                            <span class="pficon pficon-build"></span>
-                            <span class="card-pf-item-text"><strong>{{sharedImportsCount}}</strong></span>
-                        </div>
-                        <div class="card-pf-item">
-                            <span class="pficon pficon-resources-almost-empty"></span>
-                            <span class="card-pf-item-text"><strong>{{ importsNotCompared }}</strong></span>
-                        </div>
-                    </div>
-                    <p class="card-pf-info text-center">
-                        <span class="card-pf-item"><button class="btn btn-primary" ng-click="startImportsProcess()">Start</button></span>
-                        <span class="card-pf-item"><button class="btn btn-danger"
-                                                           ng-click="stopImportsProcess()">Stop</button></span>
-                    </p>
-                    <p class="card-pf-info text-center">
-                        <strong>{{ lastImportAction }} On</strong> {{ lastImportActionTimestamp | date:'medium' }}
-                    </p>
-                </div>
-                <div class="card-pf-view-checkbox">
-                    <input type="checkbox">
-                </div>
+                </a>
             </div>
         </div><!-- End Card -->
 

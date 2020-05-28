@@ -32,9 +32,9 @@
          ng-repeat="download in downloads | startFrom:(pageNumber - 1)*pageSize | limitTo:pageSize | filter:q as results track by download.path"
          ng-click="showSourceHeaders(download.sourceheaders)" ng-class-odd="'bg-light'" data-toggle="modal" data-target="#myModal">
 <!--      <a href="#" class="list-group-item-link"></a>-->
-      <div class="list-view-pf-actions">
+      <!-- <div class="list-view-pf-actions">
         <button class="btn btn-info" ng-click="redownload(download)">ReDownload</button>
-      </div>
+      </div> -->
       <div class="list-view-pf-main-info">
         <div class="list-view-pf-left">
           <span ng-if='download.checksum && download.pathmatch'
@@ -85,7 +85,7 @@
       </div>
 
       <!-- Source Content Headers -->
-      <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
@@ -95,11 +95,11 @@
               <h4 class="modal-title" id="myModalLabel">Download Source Headers</h4>
             </div>
             <div class="modal-body">
-              <ol>
+              <ul>
                 <li ng-repeat="(key,value) in sourceheaders track by $index">
                   <span>{{ key }}</span> : <strong>{{ value }}</strong>
                 </li>
-              </ol>
+              </ul>
             </div>
           </div>
         </div>
