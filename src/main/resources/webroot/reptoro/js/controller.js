@@ -573,7 +573,7 @@ reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$rou
     $scope.pageSize = 10;
     $scope.pageNumber = 1;
     $scope.numTotalItems = $scope.contents.length;
-    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100,500,1000];
+    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100];
     $scope.repoId = $location.id;
     $scope.contentsHeader = "CONTENTS FOR REPOSITORY: " + $scope.repoId ;
 
