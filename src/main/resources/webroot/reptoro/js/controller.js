@@ -537,7 +537,7 @@ reptoroApp.controller('DownloadsCtrl',['$scope', '$http', '$templateCache', '$ro
     $scope.pageSize = 10;
     $scope.pageNumber = 1;
     $scope.numTotalItems = $scope.downloads.length;
-    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100,500,1000];
+    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100];
     $scope.buildId = $location.id;
     $scope.header = "DOWNLOADS FOR " + $scope.buildId ;
 
