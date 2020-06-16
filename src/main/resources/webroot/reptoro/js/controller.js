@@ -449,7 +449,7 @@ reptoroApp.controller('SharedCtrl', ['$scope', '$http', '$templateCache', '$rout
     $scope.pageSize = 10;
     $scope.pageNumber = 1;
     $scope.numTotalItems = $scope.sharedimports.length;
-    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100,500];
+    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100];
 
     $http.get('/reptoro/sharedimport')
       .then(function (resp) {
@@ -537,7 +537,7 @@ reptoroApp.controller('DownloadsCtrl',['$scope', '$http', '$templateCache', '$ro
     $scope.pageSize = 10;
     $scope.pageNumber = 1;
     $scope.numTotalItems = $scope.downloads.length;
-    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100,500,1000];
+    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100];
     $scope.buildId = $location.id;
     $scope.header = "DOWNLOADS FOR " + $scope.buildId ;
 
@@ -573,7 +573,7 @@ reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$rou
     $scope.pageSize = 10;
     $scope.pageNumber = 1;
     $scope.numTotalItems = $scope.contents.length;
-    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100,500,1000];
+    $scope.pageSizeIncrements = [5, 10, 20, 40, 80, 100];
     $scope.repoId = $location.id;
     $scope.contentsHeader = "CONTENTS FOR REPOSITORY: " + $scope.repoId ;
 

@@ -32,10 +32,10 @@
              ng-repeat="content in contents | startFrom:(pageNumber - 1)*pageSize | limitTo:pageSize | filter:q as results track by content.parentpath+content.filename"
              ng-click="showSourceHeaders(content.sourceheaders)" ng-class-odd="'bg-light'" data-toggle="modal" data-target="#myModal">
             <!--      <a href="#" class="list-group-item-link"></a>-->
-            <div class="list-view-pf-actions">
+            <!-- <div class="list-view-pf-actions">
                 <button class="btn btn-info" ng-click="redownload(content)">ReDownload</button>
-            </div>
-            <div class="list-view-pf-main-info">
+            </div> -->
+            <div class="list-view-pf-main-info" ng-show="{{ content.checksum=='true' }}">
                 <div class="list-view-pf-left">
                     <span ng-if='content.checksum=="true"'
                           class="pficon pficon-ok list-view-pf-icon-md list-view-pf-icon-success"></span>
@@ -62,7 +62,7 @@
             </div>
 
             <!-- Source Content Headers -->
-            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
