@@ -114,7 +114,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.2.8</version> <!-- 9.4.1212 -->
+      <version>42.4.1</version> <!-- 9.4.1212 -->
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
