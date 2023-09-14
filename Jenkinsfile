@@ -6,7 +6,7 @@ def appName = 'reptoro'
 def my_bc = null
 
 pipeline {
-    agent { label 'maven' }
+    agent { label 'maven-36-jdk11' }
     stages {
         stage('Prepare') {
             steps {
