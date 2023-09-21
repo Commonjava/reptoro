@@ -16,11 +16,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.oauth2.KeycloakHelper;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
 import io.vertx.ext.auth.oauth2.impl.OAuth2TokenImpl;
-import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.dropwizard.MetricsService;
 import io.vertx.ext.web.Router;
@@ -77,7 +75,7 @@ public class ApiController extends AbstractVerticle {
 
 
 
-  private OAuth2Auth oAuth2Auth;
+//  private OAuth2Auth oAuth2Auth;
   private JsonObject config;
   private RemoteRepositoryService remoteRepositoryService;
   private SharedImportsService sharedImportsService;
@@ -154,9 +152,9 @@ public class ApiController extends AbstractVerticle {
           .addInboundPermitted(new PermittedOptions().setAddress(Topics.VERTX_METRICS).setMatch(new JsonObject()))
       );
 
-    JsonObject keycloakConfig = config.getJsonObject("keycloak");
-
-    logger.info(keycloakConfig.encodePrettily());
+//    JsonObject keycloakConfig = config.getJsonObject("keycloak");
+//
+//    logger.info(keycloakConfig.encodePrettily());
 
     HttpClientOptions httpClientOptions = new HttpClientOptions()
         .setSsl(true)
@@ -164,11 +162,11 @@ public class ApiController extends AbstractVerticle {
         .setTrustAll(true)
         ;
 
-    oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakConfig,httpClientOptions);
-    OAuth2AuthHandler oAuth2AuthHandler1 = OAuth2AuthHandler.create(oAuth2Auth);
-    oAuth2AuthHandler1.setupCallback(router.get(REPTORO_CALLBACK));
+//    oAuth2Auth = KeycloakAuth.create(vertx, OAuth2FlowType.AUTH_CODE, keycloakConfig,httpClientOptions);
+//    OAuth2AuthHandler oAuth2AuthHandler1 = OAuth2AuthHandler.create(oAuth2Auth);
+//    oAuth2AuthHandler1.setupCallback(router.get(REPTORO_CALLBACK));
     // session handler needs access to the authenticated user, otherwise we get an infinite redirect loop
-    sessionHandler.setAuthProvider(oAuth2Auth);//***
+//    sessionHandler.setAuthProvider(oAuth2Auth);//***
 
 //    router.route("/callback").handler(ctx -> authCallback(oAuth2Auth,buildHostURI(),ctx));
 
@@ -180,7 +178,7 @@ public class ApiController extends AbstractVerticle {
     // logging of user requests
     router.route().handler(LoggerHandler.create());
 
-    router.route(API_REPTORO_PROTECTED).handler(oAuth2AuthHandler1);
+//    router.route(API_REPTORO_PROTECTED).handler(oAuth2AuthHandler1);
 
     router.get(API_REPOSITORY_ALL).handler(this::handleGetAllRepositories);
     router.get(API_REPOS_NOTVALIDATED_COUNT).handler(this::handleNotValidatedRemoteRepositories);
@@ -675,24 +673,24 @@ public class ApiController extends AbstractVerticle {
   }
 
   public void currentuser(RoutingContext context) {
-    @Nullable User ctxUser = context.user();
+//    @Nullable User ctxUser = context.user();
 
-    if(Objects.nonNull(ctxUser)) {
-      String accessToken = KeycloakHelper.rawAccessToken(context.user().principal());
-      JsonObject token = KeycloakHelper.parseToken(accessToken);
-
-      OAuth2TokenImpl user = (OAuth2TokenImpl) context.user();
-      context.setUser(user);
-
-
-      context.response()
-          .putHeader(CONTENT_TYPE,APPLICATION_JSON_CHARSET_UTF_8)
-          .end(new JsonObject()
-              .put("id",token.getString("jti"))
-              .put("token",token)
-              .put("username",token.getString("preferred_username"))
-              .encodePrettily());
-    } else {
+//    if(Objects.nonNull(ctxUser)) {
+//      String accessToken = KeycloakHelper.rawAccessToken(context.user().principal());
+//      JsonObject token = KeycloakHelper.parseToken(accessToken);
+//
+//      OAuth2TokenImpl user = (OAuth2TokenImpl) context.user();
+//      context.setUser(user);
+//
+//
+//      context.response()
+//          .putHeader(CONTENT_TYPE,APPLICATION_JSON_CHARSET_UTF_8)
+//          .end(new JsonObject()
+//              .put("id",token.getString("jti"))
+//              .put("token",token)
+//              .put("username",token.getString("preferred_username"))
+//              .encodePrettily());
+//    } else {
       context.response()
           .putHeader(CONTENT_TYPE,APPLICATION_JSON_CHARSET_UTF_8)
           .end(new JsonObject()
@@ -700,7 +698,7 @@ public class ApiController extends AbstractVerticle {
               .put("token","none")
               .put("username","none")
               .encodePrettily());
-    }
+//    }
 
   }
 
