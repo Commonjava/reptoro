@@ -12,9 +12,9 @@ spec:
     source:
         git:
             ref: master
-            uri: "https://github.com/geored/reptoro.git"
+            uri: "https://github.com/Commonjava/reptoro.git"
         type: git
     strategy:
         type: JenkinsPipeline
         jenkinsPipelineStrategy:
-            jenkinsFilePath: Jenkinsfile
+            jenkinsfilePath: Jenkinsfile
