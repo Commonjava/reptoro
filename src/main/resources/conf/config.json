@@ -14,7 +14,7 @@
     "browseSharedImportsApi": "/browse/maven/hosted/shared-imports"
   },
   "cassandra": {
-    "hostname": "cassandra-cluster.indy-preview.svc.cluster.local",
+    "hostname": "cassandra-cluster",
     "keyspace": "indystorage",
     "tablename": "pathmap",
     "port": 9042,
