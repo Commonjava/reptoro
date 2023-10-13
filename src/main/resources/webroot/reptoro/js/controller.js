@@ -501,7 +501,7 @@ reptoroApp.controller("HeaderCtrl", ['$scope', '$http', '$rootScope', '$location
     $scope.logout = function () {
       $http.post('/reptoro/logout', {})
         .then(function (response) {
-          $rootScope.authenticated = false;
+//          $rootScope.authenticated = false;
           $scope.user = {};
           $rootScope.user = {};
           $location.path("/");
@@ -517,13 +517,13 @@ reptoroApp.controller("HeaderCtrl", ['$scope', '$http', '$rootScope', '$location
       $http({method: 'GET', url: $scope.authUrl})
         .then(function (response) {
           $scope.user = response.data;
-          $rootScope.authenticated = true;
+//          $rootScope.authenticated = true;
           $rootScope.user = response.data;
           $rootScope.logedIn = true;
           $log.log(response.data);
         }, function (response) {
           scope.user = {};
-          $rootScope.authenticated = false;
+//          $rootScope.authenticated = false;
         });
     };
 
