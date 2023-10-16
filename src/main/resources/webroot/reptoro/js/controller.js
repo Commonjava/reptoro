@@ -580,6 +580,7 @@ reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$rou
 
     $scope.showSourceHeaders = function (headers) {
       $scope.sourceheaders = JSON.parse(headers);
+      console.log("sourceheaders: %o", $scope.sourceheaders);
     }
 
     $http.get('/reptoro/repo/contents/' + $scope.repoId)
@@ -587,18 +588,22 @@ reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$rou
           $scope.contents = resp.data.results;
           $scope.cause = resp.data.cause || '';
           $scope.numTotalItems = $scope.contents.length;
-          // console.log($scope.downloads);
+          console.log("completed-downloads: %s", $scope.downloads);
+          console.log("completed-contents: %o", $scope.contents);
+          console.log("numTotalItems: %d", $scope.numTotalItems);
         }, function (resp) {
           $scope.contents = [];
           $scope.status = resp.status;
+          console.log("rejected-contents: %o", $scope.contents);
+          console.log("status: %d", $scope.status);
     });
 
     $scope.redownload = function (download) {
-      console.log(download);
+      console.log("download: %s", download);
     }
 
     $scope.openModalHeaders = function(headers) {
-      console.log(JSON.parse(headers));
+      console.log("headers: %o", JSON.parse(headers));
     }
   }
 ]);
