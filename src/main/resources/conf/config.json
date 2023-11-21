@@ -1,6 +1,6 @@
 {
   "indy": {
-    "host": "indy-master.indy-preview.svc.cluster.local",
+    "host": "indy.indy.svc.cluster.local",
     "port": 80,
     "user": "",
     "pass": "",
@@ -18,8 +18,8 @@
     "keyspace": "indystorage",
     "tablename": "pathmap",
     "port": 9042,
-    "user": "cassandra",
-    "pass": "cassandra",
+    "user": "indyprod",
+    "pass": "UsecTORBilasEbU",
     "reptoro": {
       "keyspace": "reptoro",
       "tablename": "repos"
