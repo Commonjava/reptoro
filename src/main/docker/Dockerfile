@@ -24,11 +24,7 @@ RUN cd /etc/pki/ca-trust/source/anchors && update-ca-trust extract && update-ca-
 
 #ENV jdk.tls.client.cipherSuites true
 
-RUN cd /etc/pki/ca-trust/source/anchors && \
-    curl -O --insecure https://password.corp.redhat.com/RH-IT-Root-CA.crt && \
-    curl -O --insecure https://password.corp.redhat.com/legacy.crt && \
-    curl -O --insecure https://engineering.redhat.com/Eng-CA.crt && \
-    update-ca-trust extract \
+RUN update-ca-trust extract \
     update-ca-trust enable
 
 #RUN cd $JAVA_HOME/lib/security \
