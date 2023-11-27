@@ -1,5 +1,5 @@
 #FROM fabric8/s2i-java:2.3
-FROM registry.redhat.io/redhat-openjdk-18/openjdk18-openshift
+FROM registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift
 
 ENV JAVA_APP_DIR=/deployments \
     JAVA_OPTIONS="-Dvertx.cacheDirBase=/tmp -Dvertx.disableDnsResolver=true"
