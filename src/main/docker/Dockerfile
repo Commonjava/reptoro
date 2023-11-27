@@ -19,7 +19,7 @@ COPY maven /deployments/
 COPY maven/Eng_Ops_CA.crt /etc/pki/ca-trust/source/anchors/Eng_Ops_CA.crt
 COPY maven/Red_Hat_IS_CA.crt /etc/pki/ca-trust/source/anchors/Red_Hat_IS_CA.crt
 COPY maven/RH-IT-Root-CA.crt /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
-COPY maven/paas_psi_redhat_com.crt /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crts
+COPY maven/paas_psi_redhat_com.crt /etc/pki/ca-trust/source/anchors/paas_psi_redhat_com.crt
 RUN cd /etc/pki/ca-trust/source/anchors && update-ca-trust extract && update-ca-trust enable
 
 #ENV jdk.tls.client.cipherSuites true
