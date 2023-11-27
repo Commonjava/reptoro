@@ -33,7 +33,7 @@ jobs:
         sonatypeSnapshots: true
 
     - name: Build the Maven verify phase
-      run: mvn -B -V clean verify
+      run: mvn -B -V clean install
 
   build:
     name: Build and push
