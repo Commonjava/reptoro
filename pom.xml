@@ -4,10 +4,22 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>org.commonjava</groupId>
+    <artifactId>commonjava</artifactId>
+    <version>18</version>
+  </parent>
+
   <groupId>com.commonjava.reptoro</groupId>
   <artifactId>reptoro</artifactId>
   <version>1.0-SNAPSHOT</version>
 
+  <scm>
+    <connection>scm:git:https://github.com/commonjava/reptoro</connection>
+    <developerConnection>scm:git:https://github.com/commonjava/reptoro</developerConnection>
+    <url>https://github.com/Commonjava/reptoro</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -336,56 +348,7 @@
           <config>src/main/resources/conf/config.json</config>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>io.fabric8</groupId>
-        <artifactId>fabric8-maven-plugin</artifactId>
-        <version>4.2.0</version>
-        <configuration>
-          <generateRoute>true</generateRoute>
-          <enableImageChangeTrigger>true</enableImageChangeTrigger>
-<!--          <enableAutomaticTrigger>true</enableAutomaticTrigger>-->
-          <!--<resourceDir>./src/main/resources</resourceDir>-->
-          <!--                    <resourceDir>src/main/resources</resourceDir>-->
-          <!--                    <enableImageChangeTrigger>true</enableImageChangeTrigger>-->
-          <resources>
-            <labels>
-              <all>
-                <property>
-                  <name>app</name>
-                  <value>reptoro</value>
-                </property>
-              </all>
-            </labels>
-          </resources>
-          <images>
-            <image>
-              <name>quay.io/factory2/reptoro</name>
-              <build>
-                <dockerFileDir>${basedir}/src/main/docker</dockerFileDir>
-                <assembly>
-                  <basedir>/deployments</basedir>
-                  <descriptor>${project.basedir}/src/main/resources/assembly/release.xml</descriptor>
-                </assembly>
-                <env>
-                  <JAVA_LIB_DIR>/deployments</JAVA_LIB_DIR>
-                  <JAVA_MAIN_CLASS>${vertx.main.class}</JAVA_MAIN_CLASS>
-                </env>
-              </build>
-            </image>
-          </images>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>resource</goal>
-              <goal>build</goal>
-              <goal>deploy</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
-
 
 </project>

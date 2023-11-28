@@ -1,0 +1,83 @@
+name: build on maven
+
+on:
+  watch:
+    types: [started]
+  pull_request:
+    types: [opened, reopened, edited, synchronize, ready_for_review]
+  push:
+    branches:
+      - main
+      - master
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: verify with maven
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: "-Xmx4096m -Xms2048m -XX:MaxMetaspaceSize=4096m -Xss8m"
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8 & 11 for x64
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        architecture: x64
+        java-version: |
+          8
+          11
+
+    - uses: s4u/maven-settings-action@v2.8.0
+      with:
+        sonatypeSnapshots: true
+
+    - name: Build the Maven verify phase
+      run: mvn -B -V clean install
+
+    - name: Checkout tools repo
+      if: ${{ github.event_name == 'push' }}
+      uses: actions/checkout@v4
+      with:
+        repository: Shokakucarrier/commonjava-images
+        path: commonjava-images
+
+    - name: Locate artifacts
+      if: ${{ github.event_name == 'push' }}
+      id: locate-artifacts
+      run: |
+        jar=$(ls -d $PWD/target/reptoro-*-fat.jar)
+        cp "$jar" "commonjava-images/reptoro/app.jar"
+
+    - name: Log in to Quay.io
+      if: ${{ github.event_name == 'push' }}
+      uses: redhat-actions/podman-login@v1
+      with:
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_TOKEN }}
+        registry: quay.io
+
+    - name: Buildah build
+      if: ${{ github.event_name == 'push' }}
+      id: buildah-build
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: reptoro
+        tags: ${{ github.ref_name }}
+        platforms: linux/amd64
+        containerfiles: |
+          ./commonjava-images/reptoro/Dockerfile
+        context: ./commonjava-images/reptoro/
+        build-args: |
+          jar_ur=app.jar
+
+    - name: Push To quay.io
+      if: ${{ github.event_name == 'push' }}
+      id: push-to-quay
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ steps.buildah-build.outputs.image }}
+        tags: ${{ steps.buildah-build.outputs.tags }}
+        registry: quay.io/factory2
