@@ -70,6 +70,8 @@ jobs:
         containerfiles: |
           ./commonjava-images/reptoro/Dockerfile
         context: ./commonjava-images/reptoro/
+        build-args: |
+          jar_ur=app.jar
 
     - name: Push To quay.io
       if: ${{ github.event_name == 'push' }}
