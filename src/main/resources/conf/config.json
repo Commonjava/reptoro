@@ -1,6 +1,6 @@
 {
   "indy": {
-    "host": "indy.newcastle-stage.svc",
+    "host": "indy-master.indy-preview.svc.cluster.local",
     "port": 80,
     "user": "",
     "pass": "",
@@ -14,7 +14,7 @@
     "browseSharedImportsApi": "/browse/maven/hosted/shared-imports"
   },
   "cassandra": {
-    "hostname": "cassandra-cluster.newcastle-stage.svc",
+    "hostname": "cassandra-cluster",
     "keyspace": "indystorage",
     "tablename": "pathmap",
     "port": 9042,
@@ -32,17 +32,5 @@
     "except.shared.import.builds.ids": ["build_perftest"],
     "api.gateway.http.port": 8080,
     "session.secret": "zwiebelfische"
-  },
-  "keycloak": {
-    "realm": "pncredhat",
-    "auth-server-url": "https://secure-sso-newcastle-stage.psi.redhat.com/auth",
-    "ssl-required": "none",
-    "resource": "reptoro",
-    "verify-token-audience": true,
-    "use-resource-role-mappings": true,
-    "confidential-port": 0,
-    "credentials": {
-      "secret": "f599ca7d-9dfb-460e-9731-dc9b250fbf5d"
-    }
   }
 }

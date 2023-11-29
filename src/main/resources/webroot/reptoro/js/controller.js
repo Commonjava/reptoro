@@ -501,7 +501,7 @@ reptoroApp.controller("HeaderCtrl", ['$scope', '$http', '$rootScope', '$location
     $scope.logout = function () {
       $http.post('/reptoro/logout', {})
         .then(function (response) {
-          $rootScope.authenticated = false;
+//          $rootScope.authenticated = false;
           $scope.user = {};
           $rootScope.user = {};
           $location.path("/");
@@ -517,13 +517,13 @@ reptoroApp.controller("HeaderCtrl", ['$scope', '$http', '$rootScope', '$location
       $http({method: 'GET', url: $scope.authUrl})
         .then(function (response) {
           $scope.user = response.data;
-          $rootScope.authenticated = true;
+//          $rootScope.authenticated = true;
           $rootScope.user = response.data;
           $rootScope.logedIn = true;
           $log.log(response.data);
         }, function (response) {
           scope.user = {};
-          $rootScope.authenticated = false;
+//          $rootScope.authenticated = false;
         });
     };
 
@@ -580,6 +580,7 @@ reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$rou
 
     $scope.showSourceHeaders = function (headers) {
       $scope.sourceheaders = JSON.parse(headers);
+      console.log("sourceheaders: %o", $scope.sourceheaders);
     }
 
     $http.get('/reptoro/repo/contents/' + $scope.repoId)
@@ -587,18 +588,22 @@ reptoroApp.controller('ContentsCtrl',['$scope', '$http', '$templateCache', '$rou
           $scope.contents = resp.data.results;
           $scope.cause = resp.data.cause || '';
           $scope.numTotalItems = $scope.contents.length;
-          // console.log($scope.downloads);
+          console.log("completed-downloads: %s", $scope.downloads);
+          console.log("completed-contents: %o", $scope.contents);
+          console.log("numTotalItems: %d", $scope.numTotalItems);
         }, function (resp) {
           $scope.contents = [];
           $scope.status = resp.status;
+          console.log("rejected-contents: %o", $scope.contents);
+          console.log("status: %d", $scope.status);
     });
 
     $scope.redownload = function (download) {
-      console.log(download);
+      console.log("download: %s", download);
     }
 
     $scope.openModalHeaders = function(headers) {
-      console.log(JSON.parse(headers));
+      console.log("headers: %o", JSON.parse(headers));
     }
   }
 ]);

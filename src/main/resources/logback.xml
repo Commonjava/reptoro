@@ -1,56 +1,27 @@
 <configuration>
 
-    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
-                <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSSX</timestampFormat>
-                <timestampFormatTimezoneId>Etc/UTC</timestampFormatTimezoneId>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender" />
 
-                <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
-                    <prettyPrint>true</prettyPrint>
-                </jsonFormatter>
-            </layout>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/var/log/reptoro/reptoro.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>/var/log/reptoro/reptoro.%i.log</fileNamePattern>
+
+            <maxIndex>8</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>100MB</maxFileSize>
+        </triggeringPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
-    </appender>
-
-    <!-- Reptoro Kafka appender -->
-    <appender name="KAFKA" class="com.github.danielwegener.logback.kafka.KafkaAppender">
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="com.commonjava.reptoro.common.CustomJsonLayout">
-                <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter"/>
-                <appendLineSeparator>true</appendLineSeparator>
-
-
-                <environmentMappings><![CDATA[
-                      POD_NAMESPACE=NAMESPACE,
-                      POD_NAME=POD_NAME,
-                      OPENSHIFT_BUILD_COMMIT=BUILD_COMMIT,
-                      HOSTNAME=HOSTNAME
-            ]]></environmentMappings>
-            </layout>
-        </encoder>
-        <topic>dynamic-indy-logs</topic>
-        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy" />
-        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
-
-        <producerConfig>bootstrap.servers=kafka.datahub.redhat.com:443</producerConfig>
-        <producerConfig>security.protocol=SSL</producerConfig>
-        <producerConfig>ssl.keystore.location=/mnt/secrets-kafka/KafkaSSLKeystore.jks</producerConfig>
-        <producerConfig>ssl.keystore.password=changeit</producerConfig>
-        <producerConfig>ssl.truststore.location=/mnt/secrets-kafka/KafkaSSLTruststore.jks</producerConfig>
-        <producerConfig>ssl.truststore.password=changeit</producerConfig>
-
-        <producerConfig>acks=0</producerConfig>
-        <producerConfig>linger.ms=100</producerConfig>
-        <producerConfig>max.block.ms=0</producerConfig>
-        <producerConfig>client.id=${HOSTNAME}-${CONTEXT_NAME}-logback-relaxed</producerConfig>
-
-
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="stdout"/>
-        <appender-ref ref="KAFKA" />
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
     </root>
 
 </configuration>
