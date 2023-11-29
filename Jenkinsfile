@@ -50,13 +50,13 @@ pipeline {
                 sh "mvn clean install"
             }
         }
-        stage('Create') {
-            steps {
-                sh "oc expose dc reptoro --port=8080"
-                sh "oc expose service reptoro"
-                sh "oc set triggers dc/reptoro --from-image=newcastle-stage/reptoro:latest -c vertx"
-            }
-        }
+        // stage('Create') {
+        //     steps {
+        //         sh "oc expose dc reptoro --port=8080"
+        //         sh "oc expose service reptoro"
+        //         sh "oc set triggers dc/reptoro --from-image=newcastle-stage/reptoro:latest -c vertx"
+        //     }
+        // }
         stage('Run tests') {
                     parallel {
                         stage('Test run 1') {
